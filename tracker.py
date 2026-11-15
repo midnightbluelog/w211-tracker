@@ -1,0 +1,157 @@
+"""
+W211 Maintenance Tracker - Step 2
+Log services for my Mercedes E220 CDI, see the history, and check what's due.
+"""
+
+import json
+from datetime import date
+from pathlib import Path
+
+# The log file lives next to this script, so it works from any folder.
+LOG_FILE = Path(__file__).parent / "service_log.json"
+
+# How often each service is due, in km.
+# Starting values for an E220 CDI (OM646 engine) driven in Tunisia (heat, dust,
+# variable diesel quality). Ask your mechanic and adjust these numbers.
+INTERVALS = {
+    "oil change": 10_000,
+    "fuel filter": 30_000,
+    "air filter": 30_000,
+    "cabin filter": 20_000,
+    "brake pads": 40_000,
+    "gearbox oil": 60_000,
+}
+
+# How close (in km) counts as "due soon".
+SOON_KM = 2_000
+
+
+def load_log():
+    """Read all saved services. Returns an empty list if there's no file yet."""
+    if not LOG_FILE.exists():
+        return []
+    with open(LOG_FILE, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def save_log(log):
+    """Write every service back to the file."""
+    with open(LOG_FILE, "w", encoding="utf-8") as f:
+        json.dump(log, f, indent=2, ensure_ascii=False)
+
+
+def ask_mileage(prompt="Mileage (km): "):
+    """Keep asking until we get a real number (accepts 245000, 245 000 or 245,000)."""
+    while True:
+        text = input(prompt).replace(" ", "").replace(",", "")
+        if text.isdigit():
+            return int(text)
+        print("  Numbers only, like 245000. Try again.")
+
+
+def pick_service():
+    """Show the known services as a numbered list, or let the user type their own."""
+    names = list(INTERVALS)
+    for i, name in enumerate(names, start=1):
+        print(f"  {i}) {name}")
+    print("  ...or type anything else (e.g. new suspension)")
+    while True:
+        text = input("What was done: ").strip()
+        if text.isdigit() and 1 <= int(text) <= len(names):
+            return names[int(text) - 1]
+        if text:
+            return text.lower()
+
+
+def add_service(log):
+    print("\n--- Add a service ---")
+    service = pick_service()
+    km = ask_mileage()
+    today = str(date.today())
+    when = input(f"Date (Enter = today, {today}): ").strip() or today
+    notes = input("Notes (parts, garage, price... optional): ").strip()
+
+    log.append({"service": service, "km": km, "date": when, "notes": notes})
+    save_log(log)
+    print(f"  Saved: {service} at {km:,} km")
+
+
+def show_history(log):
+    print("\n--- Service history ---")
+    if not log:
+        print("  Nothing logged yet.")
+        return
+    # Newest (highest mileage) first
+    for entry in sorted(log, key=lambda e: e["km"], reverse=True):
+        line = f"  {entry['date']}  {entry['km']:>9,} km  {entry['service']}"
+        if entry["notes"]:
+            line += f"  ({entry['notes']})"
+        print(line)
+
+
+def last_done_km(log, service):
+    """The highest mileage this service was logged at, or None if never."""
+    kms = [e["km"] for e in log if e["service"].lower() == service]
+    return max(kms) if kms else None
+
+
+def status_for(service, last_km, interval, current_km):
+    """
+    YOUR TURN. Return ONE line of text saying whether this service is
+    overdue, due soon, or fine.
+
+    You get:
+      service     the name, e.g. "oil change"
+      last_km     mileage when it was last done, e.g. 240000
+      interval    how often it's due, e.g. 10000
+      current_km  the car's mileage right now, e.g. 249000
+
+    Example lines to return:
+      "  OVERDUE  oil change      by 1,200 km"
+      "  SOON     fuel filter     in 1,500 km"
+      "  OK       air filter      next at 270,000 km"
+
+    Hints:
+      1. When is it due next?  last done + interval
+      2. How far away is that? next due - current mileage
+      3. Use if / elif / else with SOON_KM to pick the line.
+    """
+    # TODO: replace this line with your code
+    return f"  ???      {service:<15} (status_for not written yet)"
+
+
+def check_due(log):
+    print("\n--- What's due ---")
+    current_km = ask_mileage("Current mileage (km): ")
+    for service, interval in INTERVALS.items():
+        last_km = last_done_km(log, service)
+        if last_km is None:
+            print(f"  ?        {service:<15} never logged")
+        else:
+            print(status_for(service, last_km, interval, current_km))
+
+
+def main():
+    log = load_log()
+    print("=== W211 E220 CDI Maintenance Tracker ===")
+    while True:
+        print("\n1) Add a service")
+        print("2) Show history")
+        print("3) What's due?")
+        print("4) Quit")
+        choice = input("> ").strip()
+        if choice == "1":
+            add_service(log)
+        elif choice == "2":
+            show_history(log)
+        elif choice == "3":
+            check_due(log)
+        elif choice == "4":
+            print("Drive safe.")
+            break
+        else:
+            print("  Pick 1, 2, 3 or 4.")
+
+
+if __name__ == "__main__":
+    main()

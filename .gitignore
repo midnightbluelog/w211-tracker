@@ -1,0 +1,6 @@
+# personal car data stays private
+service_log.json
+
+# python cache
+__pycache__/
+*.pyc
