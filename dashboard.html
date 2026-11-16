@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>W211 Garage</title>
+<title>Midnight Garage</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg:#0c1124; --raised:#111733; --line:#1d2447; --text:#f3eee6; --dim:#8b91b3;
@@ -14,35 +14,65 @@
     --mono:"JetBrains Mono", ui-monospace, Consolas, monospace;
   }
   * { box-sizing:border-box; }
+  [hidden] { display:none !important; }
   body { margin:0; background:var(--bg); color:var(--text); font-family:Inter, system-ui, sans-serif; font-size:15px; line-height:1.55; }
-  .wrap { max-width:1080px; margin:0 auto; padding:28px 16px 64px; }
-  header { display:flex; align-items:baseline; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:24px; }
-  h1 { font-size:1.35rem; font-weight:600; margin:0; letter-spacing:-0.01em; }
-  h1 span { color:var(--lav); }
-  .sub { font-family:var(--mono); font-size:.78rem; color:var(--dim); }
+  .wrap { max-width:1080px; margin:0 auto; padding:24px 16px 64px; }
+  header { display:flex; align-items:center; gap:10px; margin-bottom:20px; }
+  header h1 { font-size:1.2rem; font-weight:600; margin:0; letter-spacing:-0.01em; }
+  header h1 span { color:var(--lav); }
   .grid { display:grid; grid-template-columns:1.1fr .9fr; gap:16px; }
   @media (max-width:820px) { .grid { grid-template-columns:1fr; } }
   .card { background:var(--raised); border:1px solid var(--line); border-radius:14px; padding:18px; }
+  .full { grid-column:1 / -1; }
   .card h2 { font-family:var(--mono); font-weight:400; font-size:.78rem; color:var(--dim); margin:0 0 14px; }
   .card h2::before { content:"~/"; color:var(--lav); }
-  label { display:block; font-size:.8rem; color:var(--dim); margin:0 0 4px; }
-  input, select, textarea {
+  label { display:block; font-size:.78rem; color:var(--dim); margin:0 0 4px; }
+  input, textarea {
     width:100%; background:var(--bg); color:var(--text); border:1px solid var(--line); border-radius:8px;
     padding:9px 11px; font:inherit; outline:none;
   }
-  input:focus, select:focus, textarea:focus { border-color:var(--lav); }
+  input:focus, textarea:focus { border-color:var(--lav); }
   button {
     background:var(--lav); color:#0c1124; border:0; border-radius:8px; padding:9px 16px;
-    font:inherit; font-weight:600; cursor:pointer;
+    font:inherit; font-weight:600; cursor:pointer; white-space:nowrap;
   }
   button:hover { filter:brightness(1.08); }
   button:disabled { opacity:.5; cursor:default; }
-  .row { display:flex; gap:10px; align-items:end; }
-  .row > * { flex:1; }
+  button.ghost { background:transparent; color:var(--dim); border:1px solid var(--line); font-weight:500; }
+  button.ghost:hover { color:var(--text); border-color:var(--lav); filter:none; }
+  .row { display:flex; gap:10px; align-items:end; flex-wrap:wrap; }
+  .row > * { flex:1 1 140px; }
   .row > button { flex:none; }
-  .stack > * + * { margin-top:10px; }
-  .due { list-style:none; padding:0; margin:14px 0 0; }
+  .stack > * + * { margin-top:12px; }
+  .sub { font-family:var(--mono); font-size:.75rem; color:var(--dim); }
+  .toast { font-family:var(--mono); font-size:.75rem; min-height:1.2em; }
+
+  /* my mercedes */
+  .car { display:flex; justify-content:space-between; align-items:center; gap:20px; flex-wrap:wrap; }
+  .car .title { font-size:1.5rem; font-weight:600; letter-spacing:-0.02em; margin:0; }
+  .car .title em { font-style:normal; color:var(--lav); }
+  .car .meta { margin-top:4px; }
+  .odo { display:flex; align-items:center; gap:12px; }
+  .digits { display:flex; gap:3px; font-family:var(--mono); font-weight:500; font-size:1.5rem; }
+  .digits span { background:#070a17; border:1px solid var(--line); border-radius:5px; padding:2px 7px; min-width:1.4em; text-align:center; }
+  .digits .unit { background:none; border:0; color:var(--dim); font-size:.85rem; align-self:end; }
+  .vinbox { font-family:var(--mono); font-size:.75rem; color:var(--dim); white-space:pre-line; }
+
+  /* chips */
+  .chips { display:flex; flex-wrap:wrap; gap:8px; }
+  .chip {
+    background:var(--bg); color:var(--text); border:1px solid var(--line); border-radius:99px;
+    padding:6px 13px; font-weight:500; font-size:.85rem;
+  }
+  .chip:hover { border-color:var(--lav); filter:none; }
+  .chip.on { background:rgba(169,155,240,.18); border-color:var(--lav); color:var(--text); }
+  .chip.on::before { content:"✓ "; color:var(--lav); }
+  .chip.add { color:var(--dim); border-style:dashed; }
+
+  /* what's due */
+  .due { list-style:none; padding:0; margin:0; }
   .due li { display:flex; align-items:center; gap:12px; padding:10px 0; border-top:1px solid var(--line); }
+  .due li:first-child { border-top:0; }
   .pill { font-family:var(--mono); font-size:.7rem; padding:3px 9px; border-radius:99px; min-width:78px; text-align:center; }
   .overdue { background:rgba(255,107,139,.15); color:var(--red); }
   .due_now { background:rgba(255,134,212,.15); color:var(--pink); }
@@ -51,57 +81,119 @@
   .never { background:rgba(139,145,179,.12); color:var(--dim); }
   .due .name { flex:1; }
   .due .detail { font-family:var(--mono); font-size:.75rem; color:var(--dim); text-align:right; }
+
+  /* history */
   table { width:100%; border-collapse:collapse; font-size:.88rem; }
   td { padding:8px 0; border-top:1px solid var(--line); vertical-align:top; }
-  td.km, td.date { font-family:var(--mono); font-size:.78rem; color:var(--dim); white-space:nowrap; padding-right:12px; }
-  td.delcell { width:28px; text-align:right; }
-  button.del { background:none; color:var(--dim); padding:0 6px; font-size:1.1rem; line-height:1; font-weight:400; }
-  button.del:hover { color:var(--red); filter:none; }
+  tr:first-child td { border-top:0; }
+  td.km, td.date { font-family:var(--mono); font-size:.76rem; color:var(--dim); white-space:nowrap; padding-right:12px; }
+  td.actions { width:56px; text-align:right; white-space:nowrap; }
+  button.icon { background:none; color:var(--dim); padding:0 5px; font-size:1rem; line-height:1; font-weight:400; }
+  button.icon:hover { color:var(--text); filter:none; }
+  button.icon.del:hover { color:var(--red); }
+  tr.editing td { background:rgba(169,155,240,.07); }
   .empty { color:var(--dim); font-size:.88rem; margin:6px 0 0; }
+
+  /* mechanic */
   .ai-dot { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:6px; vertical-align:1px; background:var(--dim); }
   .ai-dot.on { background:var(--green); }
   .ai-dot.warn { background:var(--amber); }
-  .chat { min-height:120px; max-height:380px; overflow:auto; margin-bottom:12px; }
+  .chat { min-height:110px; max-height:380px; overflow:auto; margin:10px 0 12px; }
   .msg { padding:10px 12px; border-radius:10px; margin-bottom:8px; white-space:pre-wrap; font-size:.9rem; }
   .msg.me { background:var(--bg); border:1px solid var(--line); }
   .msg.ai { background:rgba(169,155,240,.08); border:1px solid rgba(169,155,240,.25); }
   .msg.err { background:rgba(255,107,139,.08); border:1px solid rgba(255,107,139,.3); color:var(--red); }
-  .toast { font-family:var(--mono); font-size:.75rem; color:var(--green); min-height:1.2em; }
-  .full { grid-column:1 / -1; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <h1>W211 <span>Garage</span></h1>
-    <div class="sub">2004 · E220 CDI · OM646 · manual</div>
+    <svg width="26" height="26" viewBox="0 0 100 100" aria-hidden="true"><defs><mask id="m"><rect width="100" height="100" fill="#fff"/><circle cx="62" cy="40" r="32" fill="#000"/></mask></defs><circle cx="48" cy="52" r="38" fill="#f3eee6" mask="url(#m)"/><circle cx="84" cy="22" r="4" fill="#ff86d4"/></svg>
+    <h1>Midnight <span>Garage</span></h1>
   </header>
 
   <div class="grid">
+
+    <!-- MY MERCEDES -->
+    <section class="card full" id="carCard">
+      <h2>my-mercedes</h2>
+
+      <div id="carView" hidden>
+        <div class="car">
+          <div>
+            <p class="title" id="carTitle"></p>
+            <div class="sub meta" id="carMeta"></div>
+          </div>
+          <div class="odo">
+            <div class="digits" id="odo"></div>
+            <button class="ghost" id="odoEdit">Update</button>
+          </div>
+        </div>
+        <div class="row" id="odoForm" hidden style="margin-top:14px">
+          <div><label for="odoInput">New mileage (km)</label><input id="odoInput" inputmode="numeric"></div>
+          <button id="odoSave">Save mileage</button>
+        </div>
+        <p style="margin:12px 0 0"><button class="ghost" id="carEdit">Edit car details</button></p>
+      </div>
+
+      <div id="carSetup" hidden class="stack">
+        <p class="sub" id="setupHint">Set up your car once. Paste the VIN to fill in what we can decode.</p>
+        <div class="row">
+          <div><label for="vin">VIN (optional)</label><input id="vin" placeholder="e.g. WDB2110061A123456" maxlength="17" style="text-transform:uppercase"></div>
+          <button class="ghost" id="decode">Decode VIN</button>
+        </div>
+        <div class="vinbox" id="vinResult"></div>
+        <div class="row">
+          <div><label for="make">Make</label><input id="make" value="Mercedes-Benz"></div>
+          <div><label for="model">Model</label><input id="model" placeholder="e.g. E 220 CDI (W211)"></div>
+        </div>
+        <div class="row">
+          <div><label for="engine">Engine</label><input id="engine" placeholder="e.g. OM646 2.2 diesel"></div>
+          <div><label for="body">Body</label><input id="body" placeholder="e.g. Saloon"></div>
+          <div><label for="year">Year</label><input id="year" inputmode="numeric" placeholder="2004"></div>
+        </div>
+        <div class="row">
+          <div><label for="nickname">Nickname (optional)</label><input id="nickname" placeholder="e.g. the silver one"></div>
+          <div><label for="mileage">Current mileage (km)</label><input id="mileage" inputmode="numeric" placeholder="410000"></div>
+          <button id="carSave">Save car</button>
+        </div>
+        <div class="toast" id="carToast"></div>
+      </div>
+    </section>
+
+    <!-- WHAT'S DUE -->
     <section class="card">
       <h2>whats-due</h2>
-      <div class="row">
-        <div><label for="km">Current mileage (km)</label><input id="km" inputmode="numeric" placeholder="e.g. 249000"></div>
-        <button id="check">Check</button>
-      </div>
       <ul class="due" id="due"></ul>
-      <p class="empty" id="dueEmpty">Enter your mileage to see what's due.</p>
+      <p class="empty" id="dueEmpty">Set up your car to see what's due.</p>
     </section>
 
+    <!-- LOG A JOB -->
     <section class="card">
-      <h2>log-a-service</h2>
+      <h2 id="logTitle">log-a-job</h2>
       <div class="stack">
-        <div><label for="service">Service</label><select id="service"></select></div>
-        <div id="otherWrap" hidden><label for="other">What was done</label><input id="other" placeholder="e.g. new suspension"></div>
-        <div class="row">
-          <div><label for="skm">Mileage (km)</label><input id="skm" inputmode="numeric"></div>
-          <div><label for="sdate">Date</label><input id="sdate" type="date"></div>
+        <div>
+          <label>What was done? <span class="sub">(tap all that apply)</span></label>
+          <div class="chips" id="chips"></div>
         </div>
-        <div><label for="notes">Notes (optional)</label><input id="notes" placeholder="parts, garage, price..."></div>
-        <div class="row"><div class="toast" id="toast"></div><button id="save">Save</button></div>
+        <div class="row" id="customRow" hidden>
+          <div><input id="custom" placeholder="e.g. new suspension"></div>
+          <button class="ghost" id="customAdd">Add</button>
+        </div>
+        <div class="row">
+          <div><label for="jkm">Mileage (km)</label><input id="jkm" inputmode="numeric"></div>
+          <div><label for="jdate">Date</label><input id="jdate" type="date"></div>
+        </div>
+        <div><label for="jnotes">Notes (optional)</label><input id="jnotes" placeholder="parts, garage, price..."></div>
+        <div class="row">
+          <div class="toast" id="jobToast"></div>
+          <button class="ghost" id="cancelEdit" hidden>Cancel</button>
+          <button id="jobSave">Save job</button>
+        </div>
       </div>
     </section>
 
+    <!-- MECHANIC -->
     <section class="card">
       <h2>ask-the-mechanic</h2>
       <p class="sub" id="aiStatus"><span class="ai-dot"></span>checking local AI...</p>
@@ -112,6 +204,7 @@
       </div>
     </section>
 
+    <!-- HISTORY -->
     <section class="card">
       <h2>history</h2>
       <table><tbody id="history"></tbody></table>
@@ -123,10 +216,13 @@
 <script>
 const $ = (id) => document.getElementById(id);
 const fmt = (n) => Number(n).toLocaleString("en-US");
-const store = {
-  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
-  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
-};
+const today = () => new Date().toISOString().slice(0, 10);
+const LABELS = { overdue: "OVERDUE", due_now: "DUE NOW", soon: "SOON", ok: "OK", never: "NO DATA" };
+
+let state = null;          // last /api/state response
+let selected = new Set();  // chips picked for the job
+let extraChips = [];       // custom services added this session
+let editing = null;        // history entry being edited, or null
 
 function el(tag, cls, text) {
   const e = document.createElement(tag);
@@ -135,7 +231,131 @@ function el(tag, cls, text) {
   return e;
 }
 
-const LABELS = { overdue: "OVERDUE", due_now: "DUE NOW", soon: "SOON", ok: "OK", never: "NO DATA" };
+async function api(path, body) {
+  const res = await fetch(path, body === undefined ? undefined : {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+  });
+  return { ok: res.ok, data: await res.json() };
+}
+
+function toast(id, text, ok = true) {
+  $(id).style.color = ok ? "var(--green)" : "var(--red)";
+  $(id).textContent = text;
+}
+
+/* ---------- my mercedes ---------- */
+
+function renderCar(car) {
+  $("carView").hidden = !car;
+  $("carSetup").hidden = !!car;
+  if (!car) return;
+  $("carTitle").replaceChildren();
+  const year = car.year ? `${car.year} ` : "";
+  $("carTitle").append(year, el("em", "", car.model));
+  const bits = [car.make, car.engine, car.body, car.nickname && `"${car.nickname}"`, car.vin && `VIN ${car.vin}`].filter(Boolean);
+  $("carMeta").textContent = bits.join(" · ");
+  const odo = $("odo");
+  odo.replaceChildren();
+  String(car.mileage).padStart(6, "0").split("").forEach((d) => odo.append(el("span", "", d)));
+  odo.append(el("span", "unit", "km"));
+}
+
+$("odoEdit").onclick = () => { $("odoForm").hidden = !$("odoForm").hidden; $("odoInput").value = state.car.mileage; $("odoInput").focus(); };
+$("odoSave").onclick = async () => {
+  const r = await api("/api/mileage", { mileage: $("odoInput").value });
+  if (r.ok) { $("odoForm").hidden = true; refresh(); } else alert(r.data.error);
+};
+$("carEdit").onclick = () => {
+  const c = state.car;
+  ["make", "model", "engine", "body", "year", "nickname", "mileage", "vin"].forEach((k) => { $(k).value = c[k] ?? ""; });
+  $("setupHint").textContent = "Edit your car details.";
+  $("carView").hidden = true; $("carSetup").hidden = false;
+};
+$("decode").onclick = async () => {
+  const r = await api(`/api/vin?vin=${encodeURIComponent($("vin").value)}`);
+  const v = r.data;
+  const lines = [];
+  if (v.valid && v.make) lines.push(`✓ ${v.make}${v.series ? " · " + v.series : ""}${v.model_code ? " · model code " + v.model_code : ""}`);
+  (v.notes || []).forEach((n) => lines.push("• " + n));
+  $("vinResult").textContent = lines.join("\n");
+  if (v.make) $("make").value = v.make;
+  if (v.model) $("model").value = `${v.model}${v.series ? " (" + v.series.split(" ")[1] + ")" : ""}`;
+  if (v.engine) $("engine").value = v.engine;
+  if (v.body) $("body").value = v.body;
+};
+$("carSave").onclick = async () => {
+  const body = {};
+  ["make", "model", "engine", "body", "year", "nickname", "mileage", "vin"].forEach((k) => { body[k] = $(k).value; });
+  const r = await api("/api/car", body);
+  if (r.ok) { toast("carToast", ""); refresh(); } else toast("carToast", r.data.error, false);
+};
+
+/* ---------- chips / jobs ---------- */
+
+function allChipNames() {
+  const fromHistory = (state?.history || []).map((e) => e.service);
+  return [...new Set([...(state?.services || []), ...fromHistory, ...extraChips])];
+}
+
+function renderChips() {
+  const box = $("chips");
+  box.replaceChildren();
+  allChipNames().forEach((name) => {
+    const b = el("button", "chip" + (selected.has(name) ? " on" : ""), name);
+    b.type = "button";
+    b.onclick = () => {
+      if (editing) selected = new Set([name]);           // editing = exactly one service
+      else selected.has(name) ? selected.delete(name) : selected.add(name);
+      renderChips();
+    };
+    box.append(b);
+  });
+  const add = el("button", "chip add", "+ other");
+  add.type = "button";
+  add.onclick = () => { $("customRow").hidden = false; $("custom").focus(); };
+  box.append(add);
+}
+
+$("customAdd").onclick = () => {
+  const name = $("custom").value.trim().toLowerCase();
+  if (!name) return;
+  if (!extraChips.includes(name)) extraChips.push(name);
+  if (editing) selected = new Set([name]); else selected.add(name);
+  $("custom").value = ""; $("customRow").hidden = true;
+  renderChips();
+};
+$("custom").addEventListener("keydown", (e) => { if (e.key === "Enter") $("customAdd").click(); });
+
+function resetJobForm() {
+  editing = null; selected = new Set();
+  $("jkm").value = state?.car?.mileage ?? "";
+  $("jdate").value = today(); $("jnotes").value = "";
+  $("jobSave").textContent = "Save job"; $("cancelEdit").hidden = true;
+  $("logTitle").textContent = "log-a-job";
+  renderChips(); renderHistory();
+}
+
+$("cancelEdit").onclick = () => { resetJobForm(); toast("jobToast", ""); };
+
+$("jobSave").onclick = async () => {
+  const services = [...selected];
+  let r;
+  if (editing) {
+    r = await api("/api/edit", {
+      idx: editing.idx, orig_service: editing.service, orig_km: editing.km,
+      service: services[0] || "", km: $("jkm").value, date: $("jdate").value, notes: $("jnotes").value,
+    });
+    if (r.ok) toast("jobToast", `updated: ${r.data.updated.service}`);
+  } else {
+    r = await api("/api/job", { services, km: $("jkm").value, date: $("jdate").value, notes: $("jnotes").value });
+    if (r.ok) toast("jobToast", `saved ${r.data.saved.length} item${r.data.saved.length > 1 ? "s" : ""} at ${fmt(r.data.saved[0].km)} km`);
+  }
+  if (!r.ok) return toast("jobToast", r.data.error, false);
+  await refresh();
+  resetJobForm();
+};
+
+/* ---------- what's due ---------- */
 
 function detail(r) {
   if (r.state === "never") return `every ${fmt(r.interval)} km`;
@@ -145,74 +365,67 @@ function detail(r) {
   return `next at ${fmt(r.next_due)} km`;
 }
 
-async function refresh() {
-  const km = $("km").value.trim();
-  const res = await fetch(`/api/state?km=${encodeURIComponent(km)}`);
-  const s = await res.json();
-
-  const sel = $("service");
-  if (!sel.options.length) {
-    s.services.forEach((name) => sel.append(new Option(name, name)));
-    sel.append(new Option("other...", "__other"));
-  }
-
+function renderDue() {
   const due = $("due");
   due.replaceChildren();
-  $("dueEmpty").hidden = !!s.due;
-  (s.due || []).forEach((r) => {
+  $("dueEmpty").hidden = !!state.due;
+  (state.due || []).forEach((r) => {
     const li = el("li");
     li.append(el("span", `pill ${r.state}`, LABELS[r.state]), el("span", "name", r.service), el("span", "detail", detail(r)));
     due.append(li);
   });
+}
 
+/* ---------- history ---------- */
+
+function renderHistory() {
   const hist = $("history");
   hist.replaceChildren();
-  $("histEmpty").hidden = s.history.length > 0;
-  s.history.forEach((e) => {
-    const tr = el("tr");
+  $("histEmpty").hidden = state.history.length > 0;
+  state.history.forEach((e) => {
+    const tr = el("tr", editing && editing.idx === e.idx ? "editing" : "");
     const what = el("td");
     what.append(el("div", "", e.service));
     if (e.notes) what.append(el("div", "sub", e.notes));
-    const del = el("button", "del", "×");
+
+    const edit = el("button", "icon", "✎");
+    edit.title = "Edit this entry";
+    edit.onclick = () => {
+      editing = e; selected = new Set([e.service]);
+      $("jkm").value = e.km; $("jdate").value = e.date; $("jnotes").value = e.notes || "";
+      $("jobSave").textContent = "Save changes"; $("cancelEdit").hidden = false;
+      $("logTitle").textContent = "edit-entry";
+      renderChips(); renderHistory();
+      $("logTitle").scrollIntoView({ behavior: "smooth", block: "center" });
+    };
+
+    const del = el("button", "icon del", "×");
     del.title = "Delete this entry";
     del.onclick = async () => {
       if (!confirm(`Delete "${e.service}" at ${fmt(e.km)} km? This can't be undone.`)) return;
-      const res = await fetch("/api/delete", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idx: e.idx, service: e.service, km: e.km }),
-      });
-      if (!res.ok) alert((await res.json()).error);
+      const r = await api("/api/delete", { idx: e.idx, service: e.service, km: e.km });
+      if (!r.ok) alert(r.data.error);
+      if (editing) resetJobForm();
       refresh();
     };
-    const delCell = el("td", "delcell");
-    delCell.append(del);
-    tr.append(el("td", "date", e.date), el("td", "km", `${fmt(e.km)} km`), what, delCell);
+
+    const actions = el("td", "actions");
+    actions.append(edit, del);
+    tr.append(el("td", "date", e.date), el("td", "km", `${fmt(e.km)} km`), what, actions);
     hist.append(tr);
   });
+}
 
+/* ---------- mechanic ---------- */
+
+function renderAI(ai) {
   const st = $("aiStatus");
   st.replaceChildren();
   const dot = el("span", "ai-dot");
-  if (!s.ai.online) { st.append(dot, "local AI is offline. Start Ollama to ask questions."); }
-  else if (!s.ai.model_ready) { dot.classList.add("warn"); st.append(dot, `Ollama is on, but the model ${s.ai.model} isn't downloaded yet.`); }
-  else { dot.classList.add("on"); st.append(dot, `local AI ready · ${s.ai.model} · free, runs on your PC`); }
+  if (!ai.online) st.append(dot, "local AI is offline. Start Ollama to ask questions.");
+  else if (!ai.model_ready) { dot.classList.add("warn"); st.append(dot, `Ollama is on, but ${ai.model} isn't downloaded yet.`); }
+  else { dot.classList.add("on"); st.append(dot, `local AI ready · ${ai.model} · free, runs on your PC`); }
 }
-
-$("check").onclick = () => { store.set("km", $("km").value.trim()); refresh(); };
-$("km").addEventListener("keydown", (e) => { if (e.key === "Enter") $("check").click(); });
-$("service").onchange = () => { $("otherWrap").hidden = $("service").value !== "__other"; };
-
-$("save").onclick = async () => {
-  const service = $("service").value === "__other" ? $("other").value : $("service").value;
-  const res = await fetch("/api/service", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ service, km: $("skm").value, date: $("sdate").value, notes: $("notes").value }),
-  });
-  const data = await res.json();
-  $("toast").style.color = res.ok ? "var(--green)" : "var(--red)";
-  $("toast").textContent = res.ok ? `saved: ${data.saved.service} at ${fmt(data.saved.km)} km` : data.error;
-  if (res.ok) { $("skm").value = ""; $("notes").value = ""; $("other").value = ""; refresh(); }
-};
 
 $("ask").onclick = async () => {
   const q = $("q").value.trim();
@@ -224,24 +437,30 @@ $("ask").onclick = async () => {
   chat.scrollTop = chat.scrollHeight;
   $("q").value = ""; $("ask").disabled = true;
   try {
-    const res = await fetch("/api/ask", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question: q, km: $("km").value }),
-    });
-    const data = await res.json();
-    thinking.textContent = res.ok ? data.answer : data.error;
-    if (!res.ok) thinking.className = "msg err";
+    const r = await api("/api/ask", { question: q });
+    thinking.textContent = r.ok ? r.data.answer : r.data.error;
+    if (!r.ok) thinking.className = "msg err";
   } catch {
-    thinking.textContent = "Couldn't reach the dashboard server."; thinking.className = "msg err";
+    thinking.textContent = "Couldn't reach the garage server."; thinking.className = "msg err";
   }
   $("ask").disabled = false;
   chat.scrollTop = chat.scrollHeight;
 };
 $("q").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("ask").click(); } });
 
-$("sdate").value = new Date().toISOString().slice(0, 10);
-const savedKm = store.get("km");
-if (savedKm) $("km").value = savedKm;
+/* ---------- load ---------- */
+
+async function refresh() {
+  state = (await api("/api/state")).data;
+  renderCar(state.car);
+  renderDue();
+  renderHistory();
+  renderChips();
+  renderAI(state.ai);
+  if (!editing && !$("jkm").value && state.car) $("jkm").value = state.car.mileage;
+}
+
+$("jdate").value = today();
 refresh();
 </script>
 </body>

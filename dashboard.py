@@ -1,5 +1,5 @@
 """
-W211 dashboard: the tracker in your browser.
+Midnight Garage: the tracker in your browser.
 
 Run:  python dashboard.py
 It opens http://127.0.0.1:5211 (only reachable from this computer).
@@ -15,10 +15,29 @@ from urllib.parse import parse_qs, urlparse
 
 from mechanic import ai_status, ask_mechanic
 from tracker import INTERVALS, compute_status, last_done_km, load_log, save_log
+from vin import decode_vin
 
 HOST, PORT = "127.0.0.1", 5211
-PAGE = Path(__file__).parent / "dashboard.html"
+HERE = Path(__file__).parent
+PAGE = HERE / "dashboard.html"
+CAR_FILE = HERE / "car.json"   # your car profile, kept private like the log
 
+
+# ---------- car profile ----------
+
+def load_car():
+    if not CAR_FILE.exists():
+        return None
+    with open(CAR_FILE, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def save_car(car):
+    with open(CAR_FILE, "w", encoding="utf-8") as f:
+        json.dump(car, f, indent=2, ensure_ascii=False)
+
+
+# ---------- helpers ----------
 
 def to_km(value):
     """Accept 245000, '245 000' or '245,000'. Returns int or None."""
@@ -38,6 +57,16 @@ def due_list(log, current_km):
                      "next_due": next_due, "last_km": last, "interval": interval})
     return rows
 
+
+def bump_mileage(km):
+    """Logging a service at a higher mileage moves the car's odometer forward."""
+    car = load_car()
+    if car and km > car.get("mileage", 0):
+        car["mileage"] = km
+        save_car(car)
+
+
+# ---------- web server ----------
 
 class Handler(BaseHTTPRequestHandler):
     def send_json(self, data, status=200):
@@ -65,33 +94,87 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(body)
         elif url.path == "/api/state":
-            log = load_log()
+            log, car = load_log(), load_car()
             km = to_km(parse_qs(url.query).get("km", [""])[0])
+            if km is None and car:
+                km = car.get("mileage")
             self.send_json({
+                "car": car,
                 "services": list(INTERVALS),
-                # each entry carries its position in the file, so the page can ask to delete it
                 "history": sorted(({**e, "idx": i} for i, e in enumerate(log)),
                                   key=lambda e: e["km"], reverse=True),
                 "due": due_list(log, km) if km is not None else None,
                 "ai": ai_status(),
             })
+        elif url.path == "/api/vin":
+            self.send_json(decode_vin(parse_qs(url.query).get("vin", [""])[0]))
         else:
             self.send_json({"error": "not found"}, 404)
 
     def do_POST(self):
         data = self.read_json()
-        if self.path == "/api/service":
+
+        if self.path == "/api/car":
+            mileage = to_km(data.get("mileage", ""))
+            model = str(data.get("model", "")).strip()
+            if not model or mileage is None:
+                return self.send_json({"error": "Model and a numeric mileage are required."}, 400)
+            year = to_km(data.get("year", ""))
+            car = {
+                "nickname": str(data.get("nickname", "")).strip(),
+                "make": str(data.get("make", "Mercedes-Benz")).strip(),
+                "model": model,
+                "engine": str(data.get("engine", "")).strip(),
+                "body": str(data.get("body", "")).strip(),
+                "year": year,
+                "vin": str(data.get("vin", "")).strip().upper(),
+                "mileage": mileage,
+            }
+            save_car(car)
+            self.send_json({"car": car})
+
+        elif self.path == "/api/mileage":
+            km = to_km(data.get("mileage", ""))
+            car = load_car()
+            if not car or km is None:
+                return self.send_json({"error": "Set up your car first, and use a numeric mileage."}, 400)
+            car["mileage"] = km
+            save_car(car)
+            self.send_json({"car": car})
+
+        elif self.path == "/api/job":
+            # one job = one or more services done at the same time and mileage
+            services = [str(s).strip().lower() for s in data.get("services", []) if str(s).strip()]
+            km = to_km(data.get("km", ""))
+            if not services or km is None:
+                return self.send_json({"error": "Pick at least one service and enter the mileage."}, 400)
+            when = str(data.get("date") or date.today())
+            notes = str(data.get("notes", "")).strip()
+            log = load_log()
+            entries = [{"service": s, "km": km, "date": when, "notes": notes} for s in services]
+            log.extend(entries)
+            save_log(log)
+            bump_mileage(km)
+            self.send_json({"saved": entries})
+
+        elif self.path == "/api/edit":
+            log = load_log()
+            idx = data.get("idx")
+            if not isinstance(idx, int) or not 0 <= idx < len(log):
+                return self.send_json({"error": "That entry doesn't exist anymore. Refresh the page."}, 404)
+            entry = log[idx]
+            if entry["service"] != data.get("orig_service") or entry["km"] != data.get("orig_km"):
+                return self.send_json({"error": "The log changed. Refresh the page and try again."}, 409)
             service = str(data.get("service", "")).strip().lower()
             km = to_km(data.get("km", ""))
             if not service or km is None:
                 return self.send_json({"error": "Service and a numeric mileage are required."}, 400)
-            entry = {"service": service, "km": km,
-                     "date": str(data.get("date") or date.today()),
-                     "notes": str(data.get("notes", "")).strip()}
-            log = load_log()
-            log.append(entry)
+            log[idx] = {"service": service, "km": km,
+                        "date": str(data.get("date") or entry["date"]),
+                        "notes": str(data.get("notes", "")).strip()}
             save_log(log)
-            self.send_json({"saved": entry})
+            self.send_json({"updated": log[idx]})
+
         elif self.path == "/api/delete":
             log = load_log()
             idx = data.get("idx")
@@ -104,15 +187,19 @@ class Handler(BaseHTTPRequestHandler):
             log.pop(idx)
             save_log(log)
             self.send_json({"deleted": entry})
+
         elif self.path == "/api/ask":
             question = str(data.get("question", "")).strip()
             if not question:
                 return self.send_json({"error": "Type a question first."}, 400)
+            car = load_car()
+            km = to_km(data.get("km", "")) or (car or {}).get("mileage")
             try:
-                answer = ask_mechanic(question, load_log(), to_km(data.get("km", "")))
+                answer = ask_mechanic(question, load_log(), km)
             except RuntimeError as e:
                 return self.send_json({"error": str(e)}, 503)
             self.send_json({"answer": answer})
+
         else:
             self.send_json({"error": "not found"}, 404)
 
@@ -122,7 +209,7 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     url = f"http://{HOST}:{PORT}"
-    print(f"W211 dashboard running at {url}  (Ctrl+C to stop)")
+    print(f"Midnight Garage running at {url}  (Ctrl+C to stop)")
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     if "--no-browser" not in sys.argv:
         webbrowser.open(url)
