@@ -6,134 +6,206 @@
 <title>Midnight Garage</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg:#0c1124; --raised:#111733; --line:#1d2447; --text:#f3eee6; --dim:#8b91b3;
-    --lav:#a99bf0; --pink:#ff86d4; --red:#ff6b8b; --amber:#f5c46b; --green:#7ee2a8;
-    --mono:"JetBrains Mono", ui-monospace, Consolas, monospace;
+    --bg:#090d1d; --raised:rgba(20,26,56,.72); --line:rgba(201,204,214,.12); --line2:rgba(201,204,214,.22);
+    --text:#f3eee6; --dim:#8b91b3; --silver:#c9ccd6; --lav:#a99bf0; --pink:#ff86d4;
+    --red:#ff6b8b; --amber:#f5c46b; --green:#7ee2a8;
+    --serif:"Instrument Serif", Georgia, serif; --mono:"JetBrains Mono", ui-monospace, Consolas, monospace;
   }
   * { box-sizing:border-box; }
   [hidden] { display:none !important; }
-  body { margin:0; background:var(--bg); color:var(--text); font-family:Inter, system-ui, sans-serif; font-size:15px; line-height:1.55; }
-  .wrap { max-width:1080px; margin:0 auto; padding:24px 16px 64px; }
-  header { display:flex; align-items:center; gap:10px; margin-bottom:20px; }
-  header h1 { font-size:1.2rem; font-weight:600; margin:0; letter-spacing:-0.01em; }
-  header h1 span { color:var(--lav); }
+  html { background:var(--bg); }
+  body {
+    margin:0; color:var(--text); font-family:Inter, system-ui, sans-serif; font-size:15px; line-height:1.55;
+    background:
+      radial-gradient(900px 500px at 85% -10%, rgba(169,155,240,.12), transparent 60%),
+      radial-gradient(700px 400px at -10% 20%, rgba(201,204,214,.06), transparent 60%);
+    min-height:100vh;
+  }
+  body::before {
+    content:""; position:fixed; inset:0; pointer-events:none; z-index:50; opacity:.07;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  }
+  .wrap { max-width:1120px; margin:0 auto; padding:28px 16px 72px; }
+
+  /* header + emblem */
+  header { display:flex; align-items:center; gap:14px; margin-bottom:26px; }
+  .emblem { width:58px; height:58px; cursor:pointer; flex:none; border-radius:50%; transition:transform .4s ease; }
+  .emblem:hover { transform:scale(1.06); }
+  .emblem .ring { transform-origin:50px 50px; animation:spin 40s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .emblem .ring { animation:none; } }
+  .brand h1 { font-family:var(--serif); font-weight:400; font-size:1.8rem; line-height:1; margin:0; letter-spacing:.01em; }
+  .brand h1 em { color:var(--silver); }
+  .brand .sub { margin-top:4px; }
+  .sub { font-family:var(--mono); font-size:.72rem; color:var(--dim); letter-spacing:.02em; }
+
   .grid { display:grid; grid-template-columns:1.1fr .9fr; gap:16px; }
-  @media (max-width:820px) { .grid { grid-template-columns:1fr; } }
-  .card { background:var(--raised); border:1px solid var(--line); border-radius:14px; padding:18px; }
+  @media (max-width:860px) { .grid { grid-template-columns:1fr; } }
+  .card {
+    background:var(--raised); border:1px solid var(--line); border-radius:18px; padding:20px;
+    backdrop-filter:blur(8px); box-shadow:0 1px 0 rgba(255,255,255,.03) inset, 0 20px 40px -24px rgba(0,0,0,.6);
+  }
   .full { grid-column:1 / -1; }
-  .card h2 { font-family:var(--mono); font-weight:400; font-size:.78rem; color:var(--dim); margin:0 0 14px; }
-  .card h2::before { content:"~/"; color:var(--lav); }
-  label { display:block; font-size:.78rem; color:var(--dim); margin:0 0 4px; }
+  .card h2 { font-family:var(--mono); font-weight:400; font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); margin:0 0 16px; }
+
+  label { display:block; font-size:.76rem; color:var(--dim); margin:0 0 5px; }
   input, textarea {
-    width:100%; background:var(--bg); color:var(--text); border:1px solid var(--line); border-radius:8px;
-    padding:9px 11px; font:inherit; outline:none;
+    width:100%; background:rgba(6,9,22,.7); color:var(--text); border:1px solid var(--line); border-radius:10px;
+    padding:10px 12px; font:inherit; outline:none; transition:border-color .2s;
   }
-  input:focus, textarea:focus { border-color:var(--lav); }
+  input:focus, textarea:focus { border-color:var(--silver); }
   button {
-    background:var(--lav); color:#0c1124; border:0; border-radius:8px; padding:9px 16px;
-    font:inherit; font-weight:600; cursor:pointer; white-space:nowrap;
+    background:linear-gradient(180deg, #e7e9f0, #b9bdcb); color:#0b0f22; border:0; border-radius:10px; padding:10px 18px;
+    font:inherit; font-weight:600; cursor:pointer; white-space:nowrap; box-shadow:0 1px 0 rgba(255,255,255,.6) inset;
   }
-  button:hover { filter:brightness(1.08); }
+  button:hover { filter:brightness(1.05); }
   button:disabled { opacity:.5; cursor:default; }
-  button.ghost { background:transparent; color:var(--dim); border:1px solid var(--line); font-weight:500; }
-  button.ghost:hover { color:var(--text); border-color:var(--lav); filter:none; }
+  button.ghost { background:transparent; color:var(--silver); border:1px solid var(--line2); font-weight:500; box-shadow:none; }
+  button.ghost:hover { border-color:var(--silver); color:var(--text); filter:none; }
   .row { display:flex; gap:10px; align-items:end; flex-wrap:wrap; }
   .row > * { flex:1 1 140px; }
   .row > button { flex:none; }
   .stack > * + * { margin-top:12px; }
-  .sub { font-family:var(--mono); font-size:.75rem; color:var(--dim); }
-  .toast { font-family:var(--mono); font-size:.75rem; min-height:1.2em; }
+  .toast { font-family:var(--mono); font-size:.74rem; min-height:1.2em; }
 
-  /* my mercedes */
-  .car { display:flex; justify-content:space-between; align-items:center; gap:20px; flex-wrap:wrap; }
-  .car .title { font-size:1.5rem; font-weight:600; letter-spacing:-0.02em; margin:0; }
-  .car .title em { font-style:normal; color:var(--lav); }
-  .car .meta { margin-top:4px; }
-  .odo { display:flex; align-items:center; gap:12px; }
-  .digits { display:flex; gap:3px; font-family:var(--mono); font-weight:500; font-size:1.5rem; }
-  .digits span { background:#070a17; border:1px solid var(--line); border-radius:5px; padding:2px 7px; min-width:1.4em; text-align:center; }
-  .digits .unit { background:none; border:0; color:var(--dim); font-size:.85rem; align-self:end; }
-  .vinbox { font-family:var(--mono); font-size:.75rem; color:var(--dim); white-space:pre-line; }
+  /* instrument cluster */
+  .cluster { display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:22px; align-items:center; }
+  @media (max-width:860px) { .cluster { grid-template-columns:1fr; } }
+  .car-title { font-family:var(--serif); font-size:2.3rem; line-height:1.05; margin:0; font-weight:400; }
+  .car-title em { color:var(--silver); }
+  .car-meta { margin-top:8px; }
+  .gauge { text-align:center; }
+  .gauge svg { width:100%; max-width:190px; display:block; margin:0 auto; }
+  .gauge .val { font-family:var(--serif); font-size:2rem; line-height:1; margin-top:-34px; }
+  .gauge .lbl { margin-top:6px; }
+  .odo-wrap { text-align:center; }
+  .digits { display:inline-flex; gap:3px; font-family:var(--mono); font-weight:500; font-size:1.55rem; }
+  .digits span {
+    background:linear-gradient(180deg,#05070f,#0f1430); border:1px solid var(--line2); border-radius:6px;
+    padding:3px 8px; min-width:1.35em; text-align:center; color:var(--text);
+  }
+  .odo-actions { margin-top:10px; display:flex; gap:8px; justify-content:center; }
+  .vinbox { font-family:var(--mono); font-size:.74rem; color:var(--dim); white-space:pre-line; }
 
   /* chips */
   .chips { display:flex; flex-wrap:wrap; gap:8px; }
   .chip {
-    background:var(--bg); color:var(--text); border:1px solid var(--line); border-radius:99px;
-    padding:6px 13px; font-weight:500; font-size:.85rem;
+    background:rgba(6,9,22,.6); color:var(--text); border:1px solid var(--line); border-radius:99px;
+    padding:6px 14px; font-weight:500; font-size:.84rem; box-shadow:none;
   }
-  .chip:hover { border-color:var(--lav); filter:none; }
-  .chip.on { background:rgba(169,155,240,.18); border-color:var(--lav); color:var(--text); }
-  .chip.on::before { content:"✓ "; color:var(--lav); }
+  .chip:hover { border-color:var(--silver); filter:none; }
+  .chip.on { background:rgba(201,204,214,.14); border-color:var(--silver); }
+  .chip.on::before { content:"✓ "; color:var(--silver); }
   .chip.add { color:var(--dim); border-style:dashed; }
 
-  /* what's due */
-  .due { list-style:none; padding:0; margin:0; }
-  .due li { display:flex; align-items:center; gap:12px; padding:10px 0; border-top:1px solid var(--line); }
-  .due li:first-child { border-top:0; }
-  .pill { font-family:var(--mono); font-size:.7rem; padding:3px 9px; border-radius:99px; min-width:78px; text-align:center; }
-  .overdue { background:rgba(255,107,139,.15); color:var(--red); }
-  .due_now { background:rgba(255,134,212,.15); color:var(--pink); }
-  .soon { background:rgba(245,196,107,.15); color:var(--amber); }
+  /* lists */
+  .list { list-style:none; padding:0; margin:0; }
+  .list li { display:flex; align-items:flex-start; gap:12px; padding:11px 0; border-top:1px solid var(--line); }
+  .list li:first-child { border-top:0; padding-top:2px; }
+  .pill { font-family:var(--mono); font-size:.66rem; letter-spacing:.04em; padding:3px 9px; border-radius:99px; min-width:80px; text-align:center; flex:none; margin-top:2px; }
+  .overdue, .safety { background:rgba(255,107,139,.14); color:var(--red); }
+  .due_now { background:rgba(255,134,212,.14); color:var(--pink); }
+  .soon, .important { background:rgba(245,196,107,.14); color:var(--amber); }
   .ok { background:rgba(126,226,168,.12); color:var(--green); }
-  .never { background:rgba(139,145,179,.12); color:var(--dim); }
-  .due .name { flex:1; }
-  .due .detail { font-family:var(--mono); font-size:.75rem; color:var(--dim); text-align:right; }
+  .never, .watch { background:rgba(139,145,179,.12); color:var(--dim); }
+  .list .name { flex:1; }
+  .list .name small { display:block; color:var(--dim); font-size:.78rem; margin-top:2px; }
+  .list .detail { font-family:var(--mono); font-size:.72rem; color:var(--dim); text-align:right; flex:none; }
+  details summary { cursor:pointer; list-style:none; }
+  details summary::-webkit-details-marker { display:none; }
+  details[open] .more { margin-top:6px; }
+  .more { font-size:.82rem; color:var(--dim); }
 
   /* history */
-  table { width:100%; border-collapse:collapse; font-size:.88rem; }
-  td { padding:8px 0; border-top:1px solid var(--line); vertical-align:top; }
+  table { width:100%; border-collapse:collapse; font-size:.87rem; }
+  td { padding:9px 0; border-top:1px solid var(--line); vertical-align:top; }
   tr:first-child td { border-top:0; }
-  td.km, td.date { font-family:var(--mono); font-size:.76rem; color:var(--dim); white-space:nowrap; padding-right:12px; }
+  td.km, td.date { font-family:var(--mono); font-size:.74rem; color:var(--dim); white-space:nowrap; padding-right:12px; }
   td.actions { width:56px; text-align:right; white-space:nowrap; }
-  button.icon { background:none; color:var(--dim); padding:0 5px; font-size:1rem; line-height:1; font-weight:400; }
+  button.icon { background:none; color:var(--dim); padding:0 5px; font-size:1rem; line-height:1; font-weight:400; box-shadow:none; }
   button.icon:hover { color:var(--text); filter:none; }
   button.icon.del:hover { color:var(--red); }
-  tr.editing td { background:rgba(169,155,240,.07); }
-  .empty { color:var(--dim); font-size:.88rem; margin:6px 0 0; }
+  tr.editing td { background:rgba(201,204,214,.06); }
+  .empty { color:var(--dim); font-size:.87rem; margin:4px 0 0; }
 
   /* mechanic */
+  .tabs { display:flex; gap:6px; margin-bottom:12px; }
+  .tab { background:transparent; color:var(--dim); border:1px solid var(--line); box-shadow:none; padding:6px 14px; font-weight:500; font-size:.84rem; }
+  .tab.on { color:var(--text); border-color:var(--silver); background:rgba(201,204,214,.1); }
   .ai-dot { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:6px; vertical-align:1px; background:var(--dim); }
   .ai-dot.on { background:var(--green); }
   .ai-dot.warn { background:var(--amber); }
-  .chat { min-height:110px; max-height:380px; overflow:auto; margin:10px 0 12px; }
-  .msg { padding:10px 12px; border-radius:10px; margin-bottom:8px; white-space:pre-wrap; font-size:.9rem; }
-  .msg.me { background:var(--bg); border:1px solid var(--line); }
-  .msg.ai { background:rgba(169,155,240,.08); border:1px solid rgba(169,155,240,.25); }
+  .chat { min-height:100px; max-height:420px; overflow:auto; margin:12px 0; }
+  .msg { padding:11px 13px; border-radius:12px; margin-bottom:8px; white-space:pre-wrap; font-size:.9rem; }
+  .msg.me { background:rgba(6,9,22,.7); border:1px solid var(--line); }
+  .msg.ai { background:rgba(169,155,240,.07); border:1px solid rgba(169,155,240,.22); }
   .msg.err { background:rgba(255,107,139,.08); border:1px solid rgba(255,107,139,.3); color:var(--red); }
+  .qa label { color:var(--text); font-size:.86rem; }
+
+  /* car view overlay */
+  .overlay { position:fixed; inset:0; background:rgba(4,6,15,.82); backdrop-filter:blur(10px); z-index:40; display:grid; place-items:center; padding:16px; }
+  .showroom { width:min(820px,100%); text-align:center; }
+  .showroom svg.car { width:100%; height:auto; filter:drop-shadow(0 30px 30px rgba(0,0,0,.5)); }
+  .showroom .car-title { font-size:2.8rem; }
+  .stats { display:flex; justify-content:center; gap:28px; flex-wrap:wrap; margin-top:18px; }
+  .stats div { text-align:center; }
+  .stats b { display:block; font-family:var(--serif); font-weight:400; font-size:1.7rem; }
+  .close-hint { margin-top:22px; }
+  .foot { margin-top:22px; text-align:center; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <svg width="26" height="26" viewBox="0 0 100 100" aria-hidden="true"><defs><mask id="m"><rect width="100" height="100" fill="#fff"/><circle cx="62" cy="40" r="32" fill="#000"/></mask></defs><circle cx="48" cy="52" r="38" fill="#f3eee6" mask="url(#m)"/><circle cx="84" cy="22" r="4" fill="#ff86d4"/></svg>
-    <h1>Midnight <span>Garage</span></h1>
+    <svg class="emblem" id="emblem" viewBox="0 0 100 100" role="button" aria-label="Open the car view">
+      <defs>
+        <linearGradient id="chrome" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4f5f8"/><stop offset=".5" stop-color="#9ea3b5"/><stop offset="1" stop-color="#e3e5ec"/></linearGradient>
+        <path id="ringPath" d="M50,50 m-38,0 a38,38 0 1,1 76,0 a38,38 0 1,1 -76,0"/>
+        <mask id="cres"><rect width="100" height="100" fill="#fff"/><circle cx="57" cy="44" r="15" fill="#000"/></mask>
+      </defs>
+      <circle cx="50" cy="50" r="48" fill="#0c1124" stroke="url(#chrome)" stroke-width="2"/>
+      <circle cx="50" cy="50" r="31" fill="none" stroke="url(#chrome)" stroke-width="1" opacity=".6"/>
+      <g class="ring"><text font-family="JetBrains Mono, monospace" font-size="6.2" letter-spacing="2.2" fill="#c9ccd6"><textPath href="#ringPath">MIDNIGHT · GARAGE · EST 2026 · MIDNIGHT · GARAGE ·</textPath></text></g>
+      <circle cx="49" cy="51" r="18" fill="url(#chrome)" mask="url(#cres)"/>
+      <circle cx="66" cy="36" r="2.2" fill="#ff86d4"/>
+    </svg>
+    <div class="brand">
+      <h1>Midnight <em>Garage</em></h1>
+      <div class="sub">your classic, looked after · tap the emblem</div>
+    </div>
   </header>
 
   <div class="grid">
 
-    <!-- MY MERCEDES -->
-    <section class="card full" id="carCard">
-      <h2>my-mercedes</h2>
+    <!-- INSTRUMENT CLUSTER / MY MERCEDES -->
+    <section class="card full">
+      <h2>My Mercedes</h2>
 
       <div id="carView" hidden>
-        <div class="car">
+        <div class="cluster">
           <div>
-            <p class="title" id="carTitle"></p>
-            <div class="sub meta" id="carMeta"></div>
+            <p class="car-title" id="carTitle"></p>
+            <div class="sub car-meta" id="carMeta"></div>
+            <p style="margin:14px 0 0"><button class="ghost" id="carEdit">Edit car details</button></p>
           </div>
-          <div class="odo">
+          <div class="gauge">
+            <svg viewBox="0 0 200 120"><path d="M20 110 A80 80 0 0 1 180 110" fill="none" stroke="rgba(201,204,214,.15)" stroke-width="10" stroke-linecap="round"/><path id="gaugeArc" d="M20 110 A80 80 0 0 1 180 110" fill="none" stroke="url(#gaugeGrad)" stroke-width="10" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100"/><defs><linearGradient id="gaugeGrad"><stop offset="0" stop-color="#ff6b8b"/><stop offset=".5" stop-color="#f5c46b"/><stop offset="1" stop-color="#7ee2a8"/></linearGradient></defs></svg>
+            <div class="val" id="health">–</div>
+            <div class="sub lbl">service health</div>
+          </div>
+          <div class="odo-wrap">
             <div class="digits" id="odo"></div>
-            <button class="ghost" id="odoEdit">Update</button>
+            <div class="sub" style="margin-top:6px">odometer · km</div>
+            <div class="odo-actions"><button class="ghost" id="odoEdit">Update mileage</button></div>
+            <div class="row" id="odoForm" hidden style="margin-top:10px">
+              <div><input id="odoInput" inputmode="numeric" aria-label="New mileage"></div>
+              <button id="odoSave">Save</button>
+            </div>
           </div>
         </div>
-        <div class="row" id="odoForm" hidden style="margin-top:14px">
-          <div><label for="odoInput">New mileage (km)</label><input id="odoInput" inputmode="numeric"></div>
-          <button id="odoSave">Save mileage</button>
-        </div>
-        <p style="margin:12px 0 0"><button class="ghost" id="carEdit">Edit car details</button></p>
       </div>
 
       <div id="carSetup" hidden class="stack">
@@ -163,17 +235,17 @@
 
     <!-- WHAT'S DUE -->
     <section class="card">
-      <h2>whats-due</h2>
-      <ul class="due" id="due"></ul>
+      <h2>What's due</h2>
+      <ul class="list" id="due"></ul>
       <p class="empty" id="dueEmpty">Set up your car to see what's due.</p>
     </section>
 
     <!-- LOG A JOB -->
     <section class="card">
-      <h2 id="logTitle">log-a-job</h2>
+      <h2 id="logTitle">Log a job</h2>
       <div class="stack">
         <div>
-          <label>What was done? <span class="sub">(tap all that apply)</span></label>
+          <label>What was done? <span class="sub">tap all that apply</span></label>
           <div class="chips" id="chips"></div>
         </div>
         <div class="row" id="customRow" hidden>
@@ -193,23 +265,80 @@
       </div>
     </section>
 
+    <!-- WATCH LIST -->
+    <section class="card">
+      <h2>Watch list at your mileage</h2>
+      <ul class="list" id="watch"></ul>
+      <p class="empty" id="watchEmpty">Set up your car to see known issues for your mileage.</p>
+    </section>
+
     <!-- MECHANIC -->
     <section class="card">
-      <h2>ask-the-mechanic</h2>
+      <h2>Your mechanic</h2>
+      <div class="tabs">
+        <button class="tab on" id="tabQuick">Quick question</button>
+        <button class="tab" id="tabDiag">Diagnosis session</button>
+      </div>
       <p class="sub" id="aiStatus"><span class="ai-dot"></span>checking local AI...</p>
-      <div class="chat" id="chat"></div>
-      <div class="row">
-        <div><textarea id="q" rows="2" placeholder="e.g. grinding noise when I brake, what should I check?"></textarea></div>
-        <button id="ask">Ask</button>
+
+      <div id="quickPane">
+        <div class="chat" id="chat"></div>
+        <div class="row">
+          <div><textarea id="q" rows="2" placeholder="e.g. what should I watch at 410,000 km?"></textarea></div>
+          <button id="ask">Ask</button>
+        </div>
+      </div>
+
+      <div id="diagPane" hidden>
+        <div class="stack" id="diagStep1">
+          <div><label for="symptom">What's wrong? Describe it like you'd tell a mechanic.</label>
+            <textarea id="symptom" rows="2" placeholder="e.g. grinding noise when I brake"></textarea></div>
+          <div class="row"><div class="toast" id="diagToast"></div><button id="diagStart">Start session</button></div>
+        </div>
+        <div class="stack qa" id="diagStep2" hidden>
+          <p class="sub">The mechanic has a few questions first:</p>
+          <div id="diagQs" class="stack"></div>
+          <div class="row"><div></div><button class="ghost" id="diagReset">Start over</button><button id="diagFinish">Get diagnosis</button></div>
+        </div>
+        <div class="chat" id="diagOut"></div>
       </div>
     </section>
 
     <!-- HISTORY -->
-    <section class="card">
-      <h2>history</h2>
+    <section class="card full">
+      <h2>History</h2>
       <table><tbody id="history"></tbody></table>
       <p class="empty" id="histEmpty">Nothing logged yet.</p>
     </section>
+  </div>
+
+  <p class="sub foot" id="disclaimer"></p>
+</div>
+
+<!-- CAR VIEW (showroom) -->
+<div class="overlay" id="showroom" hidden>
+  <div class="showroom">
+    <svg class="car" viewBox="0 0 260 90" aria-hidden="true">
+      <defs>
+        <linearGradient id="carPaint" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f1f3f8"/><stop offset=".5" stop-color="#bfc3d1"/><stop offset="1" stop-color="#7e84a3"/></linearGradient>
+        <radialGradient id="floor" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#a99bf0" stop-opacity=".25"/><stop offset="1" stop-color="#a99bf0" stop-opacity="0"/></radialGradient>
+      </defs>
+      <ellipse cx="130" cy="78" rx="130" ry="10" fill="url(#floor)"/>
+      <g transform="translate(9 8)">
+        <path d="M8,56 L10,44 Q14,37 36,35 L66,33 Q84,15 110,13 L150,13 Q170,14 186,29 L206,33 Q232,37 238,47 L240,55 Q240,60 233,60 L14,60 Q8,60 8,56 Z" fill="url(#carPaint)"/>
+        <path d="M74,33 Q90,20 110,18 L128,18 L128,33 Z" fill="#1d2450"/>
+        <path d="M133,18 L150,18 Q166,19 180,31 L180,33 L133,33 Z" fill="#1d2450"/>
+        <path d="M20,44 L232,44" stroke="#8a90ad" stroke-width="1.2"/>
+        <ellipse cx="232" cy="42" rx="5" ry="3" fill="#fff6d6"/>
+        <ellipse cx="11" cy="46" rx="2.5" ry="3" fill="#ff6b8b" opacity=".8"/>
+        <circle cx="54" cy="60" r="14" fill="#0b0b16"/><circle cx="54" cy="60" r="8.5" fill="#b4b9cc"/><circle cx="54" cy="60" r="3" fill="#2a2f4a"/>
+        <circle cx="192" cy="60" r="14" fill="#0b0b16"/><circle cx="192" cy="60" r="8.5" fill="#b4b9cc"/><circle cx="192" cy="60" r="3" fill="#2a2f4a"/>
+      </g>
+    </svg>
+    <p class="car-title" id="srTitle"></p>
+    <div class="sub" id="srMeta" style="margin-top:8px"></div>
+    <div class="stats" id="srStats"></div>
+    <p class="sub close-hint">click anywhere to close</p>
   </div>
 </div>
 
@@ -218,11 +347,9 @@ const $ = (id) => document.getElementById(id);
 const fmt = (n) => Number(n).toLocaleString("en-US");
 const today = () => new Date().toISOString().slice(0, 10);
 const LABELS = { overdue: "OVERDUE", due_now: "DUE NOW", soon: "SOON", ok: "OK", never: "NO DATA" };
+const SEV = { safety: "SAFETY", important: "IMPORTANT", watch: "WATCH" };
 
-let state = null;          // last /api/state response
-let selected = new Set();  // chips picked for the job
-let extraChips = [];       // custom services added this session
-let editing = null;        // history entry being edited, or null
+let state = null, selected = new Set(), extraChips = [], editing = null, diagQuestions = [];
 
 function el(tag, cls, text) {
   const e = document.createElement(tag);
@@ -230,34 +357,41 @@ function el(tag, cls, text) {
   if (text !== undefined) e.textContent = text;
   return e;
 }
-
 async function api(path, body) {
   const res = await fetch(path, body === undefined ? undefined : {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
   });
   return { ok: res.ok, data: await res.json() };
 }
+function toast(id, text, ok = true) { $(id).style.color = ok ? "var(--green)" : "var(--red)"; $(id).textContent = text; }
 
-function toast(id, text, ok = true) {
-  $(id).style.color = ok ? "var(--green)" : "var(--red)";
-  $(id).textContent = text;
+/* ---------- car + cluster ---------- */
+
+function carTitle(node, car) {
+  node.replaceChildren();
+  node.append(car.year ? `${car.year} ` : "", el("em", "", car.model));
 }
-
-/* ---------- my mercedes ---------- */
-
-function renderCar(car) {
-  $("carView").hidden = !car;
-  $("carSetup").hidden = !!car;
+function carMeta(car) {
+  return [car.make, car.engine, car.body, car.nickname && `"${car.nickname}"`, car.vin && `VIN ${car.vin}`].filter(Boolean).join(" · ");
+}
+function healthScore() {
+  const known = (state.due || []).filter((d) => d.state !== "never");
+  if (!known.length) return null;
+  const pts = { ok: 1, soon: 0.6, due_now: 0.3, overdue: 0 };
+  return Math.round(100 * known.reduce((s, d) => s + pts[d.state], 0) / known.length);
+}
+function renderCar() {
+  const car = state.car;
+  $("carView").hidden = !car; $("carSetup").hidden = !!car;
   if (!car) return;
-  $("carTitle").replaceChildren();
-  const year = car.year ? `${car.year} ` : "";
-  $("carTitle").append(year, el("em", "", car.model));
-  const bits = [car.make, car.engine, car.body, car.nickname && `"${car.nickname}"`, car.vin && `VIN ${car.vin}`].filter(Boolean);
-  $("carMeta").textContent = bits.join(" · ");
+  carTitle($("carTitle"), car);
+  $("carMeta").textContent = carMeta(car);
   const odo = $("odo");
   odo.replaceChildren();
   String(car.mileage).padStart(6, "0").split("").forEach((d) => odo.append(el("span", "", d)));
-  odo.append(el("span", "unit", "km"));
+  const h = healthScore();
+  $("health").textContent = h === null ? "–" : `${h}%`;
+  $("gaugeArc").setAttribute("stroke-dasharray", `${h || 0} 100`);
 }
 
 $("odoEdit").onclick = () => { $("odoForm").hidden = !$("odoForm").hidden; $("odoInput").value = state.car.mileage; $("odoInput").focus(); };
@@ -266,14 +400,12 @@ $("odoSave").onclick = async () => {
   if (r.ok) { $("odoForm").hidden = true; refresh(); } else alert(r.data.error);
 };
 $("carEdit").onclick = () => {
-  const c = state.car;
-  ["make", "model", "engine", "body", "year", "nickname", "mileage", "vin"].forEach((k) => { $(k).value = c[k] ?? ""; });
+  ["make", "model", "engine", "body", "year", "nickname", "mileage", "vin"].forEach((k) => { $(k).value = state.car[k] ?? ""; });
   $("setupHint").textContent = "Edit your car details.";
   $("carView").hidden = true; $("carSetup").hidden = false;
 };
 $("decode").onclick = async () => {
-  const r = await api(`/api/vin?vin=${encodeURIComponent($("vin").value)}`);
-  const v = r.data;
+  const v = (await api(`/api/vin?vin=${encodeURIComponent($("vin").value)}`)).data;
   const lines = [];
   if (v.valid && v.make) lines.push(`✓ ${v.make}${v.series ? " · " + v.series : ""}${v.model_code ? " · model code " + v.model_code : ""}`);
   (v.notes || []).forEach((n) => lines.push("• " + n));
@@ -290,13 +422,31 @@ $("carSave").onclick = async () => {
   if (r.ok) { toast("carToast", ""); refresh(); } else toast("carToast", r.data.error, false);
 };
 
+/* ---------- showroom (tap the emblem) ---------- */
+
+$("emblem").onclick = () => {
+  if (!state?.car) return;
+  carTitle($("srTitle"), state.car);
+  $("srMeta").textContent = carMeta(state.car);
+  const stats = $("srStats");
+  stats.replaceChildren();
+  const h = healthScore();
+  const urgent = (state.due || []).filter((d) => d.state === "overdue" || d.state === "due_now").length;
+  [[fmt(state.car.mileage), "kilometres"], [h === null ? "–" : `${h}%`, "service health"],
+   [state.history.length, "services logged"], [urgent, "need attention"]].forEach(([v, l]) => {
+    const d = el("div"); d.append(el("b", "", v), el("span", "sub", l)); stats.append(d);
+  });
+  $("showroom").hidden = false;
+};
+$("showroom").onclick = () => { $("showroom").hidden = true; };
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("showroom").hidden = true; });
+
 /* ---------- chips / jobs ---------- */
 
 function allChipNames() {
   const fromHistory = (state?.history || []).map((e) => e.service);
   return [...new Set([...(state?.services || []), ...fromHistory, ...extraChips])];
 }
-
 function renderChips() {
   const box = $("chips");
   box.replaceChildren();
@@ -304,7 +454,7 @@ function renderChips() {
     const b = el("button", "chip" + (selected.has(name) ? " on" : ""), name);
     b.type = "button";
     b.onclick = () => {
-      if (editing) selected = new Set([name]);           // editing = exactly one service
+      if (editing) selected = new Set([name]);
       else selected.has(name) ? selected.delete(name) : selected.add(name);
       renderChips();
     };
@@ -315,7 +465,6 @@ function renderChips() {
   add.onclick = () => { $("customRow").hidden = false; $("custom").focus(); };
   box.append(add);
 }
-
 $("customAdd").onclick = () => {
   const name = $("custom").value.trim().toLowerCase();
   if (!name) return;
@@ -331,20 +480,16 @@ function resetJobForm() {
   $("jkm").value = state?.car?.mileage ?? "";
   $("jdate").value = today(); $("jnotes").value = "";
   $("jobSave").textContent = "Save job"; $("cancelEdit").hidden = true;
-  $("logTitle").textContent = "log-a-job";
+  $("logTitle").textContent = "Log a job";
   renderChips(); renderHistory();
 }
-
 $("cancelEdit").onclick = () => { resetJobForm(); toast("jobToast", ""); };
-
 $("jobSave").onclick = async () => {
   const services = [...selected];
   let r;
   if (editing) {
-    r = await api("/api/edit", {
-      idx: editing.idx, orig_service: editing.service, orig_km: editing.km,
-      service: services[0] || "", km: $("jkm").value, date: $("jdate").value, notes: $("jnotes").value,
-    });
+    r = await api("/api/edit", { idx: editing.idx, orig_service: editing.service, orig_km: editing.km,
+      service: services[0] || "", km: $("jkm").value, date: $("jdate").value, notes: $("jnotes").value });
     if (r.ok) toast("jobToast", `updated: ${r.data.updated.service}`);
   } else {
     r = await api("/api/job", { services, km: $("jkm").value, date: $("jdate").value, notes: $("jnotes").value });
@@ -355,25 +500,44 @@ $("jobSave").onclick = async () => {
   resetJobForm();
 };
 
-/* ---------- what's due ---------- */
+/* ---------- what's due + watch list ---------- */
 
-function detail(r) {
+function dueDetail(r) {
   if (r.state === "never") return `every ${fmt(r.interval)} km`;
-  if (r.state === "overdue") return `by ${fmt(-r.km_left)} km`;
+  if (r.state === "overdue") return r.km_left < 0 ? `by ${fmt(-r.km_left)} km` : "too old (time)";
   if (r.state === "due_now") return "change it now";
-  if (r.state === "soon") return `in ${fmt(r.km_left)} km`;
+  if (r.state === "soon") return r.km_left <= 2000 ? `in ${fmt(r.km_left)} km` : `in ${r.days_left} days`;
   return `next at ${fmt(r.next_due)} km`;
 }
-
 function renderDue() {
-  const due = $("due");
-  due.replaceChildren();
+  const box = $("due");
+  box.replaceChildren();
   $("dueEmpty").hidden = !!state.due;
-  (state.due || []).forEach((r) => {
+  const order = { overdue: 0, due_now: 1, soon: 2, ok: 3, never: 4 };
+  [...(state.due || [])].sort((a, b) => order[a.state] - order[b.state]).forEach((r) => {
     const li = el("li");
-    li.append(el("span", `pill ${r.state}`, LABELS[r.state]), el("span", "name", r.service), el("span", "detail", detail(r)));
-    due.append(li);
+    const name = el("details", "name");
+    const sum = el("summary", "", r.service);
+    name.append(sum, el("div", "more", r.why));
+    li.append(el("span", `pill ${r.state}`, LABELS[r.state]), name, el("span", "detail", dueDetail(r)));
+    box.append(li);
   });
+}
+function renderWatch() {
+  const box = $("watch");
+  box.replaceChildren();
+  $("watchEmpty").hidden = !!state.watch;
+  (state.watch || []).forEach((i) => {
+    const li = el("li");
+    const name = el("details", "name");
+    name.append(el("summary", "", i.name));
+    const more = el("div", "more");
+    more.append(el("div", "", "Signs: " + i.symptoms.join(" · ")), el("div", "", "Check: " + i.check));
+    name.append(more);
+    li.append(el("span", `pill ${i.severity}`, SEV[i.severity]), name);
+    box.append(li);
+  });
+  $("disclaimer").textContent = state.disclaimer || "";
 }
 
 /* ---------- history ---------- */
@@ -387,18 +551,16 @@ function renderHistory() {
     const what = el("td");
     what.append(el("div", "", e.service));
     if (e.notes) what.append(el("div", "sub", e.notes));
-
     const edit = el("button", "icon", "✎");
     edit.title = "Edit this entry";
     edit.onclick = () => {
       editing = e; selected = new Set([e.service]);
       $("jkm").value = e.km; $("jdate").value = e.date; $("jnotes").value = e.notes || "";
       $("jobSave").textContent = "Save changes"; $("cancelEdit").hidden = false;
-      $("logTitle").textContent = "edit-entry";
+      $("logTitle").textContent = "Edit entry";
       renderChips(); renderHistory();
       $("logTitle").scrollIntoView({ behavior: "smooth", block: "center" });
     };
-
     const del = el("button", "icon del", "×");
     del.title = "Delete this entry";
     del.onclick = async () => {
@@ -408,7 +570,6 @@ function renderHistory() {
       if (editing) resetJobForm();
       refresh();
     };
-
     const actions = el("td", "actions");
     actions.append(edit, del);
     tr.append(el("td", "date", e.date), el("td", "km", `${fmt(e.km)} km`), what, actions);
@@ -426,6 +587,12 @@ function renderAI(ai) {
   else if (!ai.model_ready) { dot.classList.add("warn"); st.append(dot, `Ollama is on, but ${ai.model} isn't downloaded yet.`); }
   else { dot.classList.add("on"); st.append(dot, `local AI ready · ${ai.model} · free, runs on your PC`); }
 }
+function setTab(diag) {
+  $("tabQuick").classList.toggle("on", !diag); $("tabDiag").classList.toggle("on", diag);
+  $("quickPane").hidden = diag; $("diagPane").hidden = !diag;
+}
+$("tabQuick").onclick = () => setTab(false);
+$("tabDiag").onclick = () => setTab(true);
 
 $("ask").onclick = async () => {
   const q = $("q").value.trim();
@@ -433,33 +600,59 @@ $("ask").onclick = async () => {
   const chat = $("chat");
   chat.append(el("div", "msg me", q));
   const thinking = el("div", "msg ai", "thinking...");
-  chat.append(thinking);
-  chat.scrollTop = chat.scrollHeight;
+  chat.append(thinking); chat.scrollTop = chat.scrollHeight;
   $("q").value = ""; $("ask").disabled = true;
   try {
     const r = await api("/api/ask", { question: q });
     thinking.textContent = r.ok ? r.data.answer : r.data.error;
     if (!r.ok) thinking.className = "msg err";
-  } catch {
-    thinking.textContent = "Couldn't reach the garage server."; thinking.className = "msg err";
-  }
-  $("ask").disabled = false;
-  chat.scrollTop = chat.scrollHeight;
+  } catch { thinking.textContent = "Couldn't reach the garage server."; thinking.className = "msg err"; }
+  $("ask").disabled = false; chat.scrollTop = chat.scrollHeight;
 };
 $("q").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("ask").click(); } });
+
+$("diagStart").onclick = async () => {
+  const symptom = $("symptom").value.trim();
+  if (!symptom) return toast("diagToast", "Describe the problem first.", false);
+  $("diagStart").disabled = true; toast("diagToast", "the mechanic is thinking of questions...");
+  const r = await api("/api/diagnose/start", { symptom });
+  $("diagStart").disabled = false;
+  if (!r.ok) return toast("diagToast", r.data.error, false);
+  toast("diagToast", "");
+  diagQuestions = r.data.questions;
+  const box = $("diagQs");
+  box.replaceChildren();
+  diagQuestions.forEach((q, i) => {
+    const wrap = el("div");
+    const lab = el("label", "", q); lab.htmlFor = `dq${i}`;
+    const inp = el("input"); inp.id = `dq${i}`;
+    wrap.append(lab, inp); box.append(wrap);
+  });
+  $("diagStep1").hidden = true; $("diagStep2").hidden = false;
+};
+$("diagReset").onclick = () => {
+  $("diagStep1").hidden = false; $("diagStep2").hidden = true; $("diagOut").replaceChildren(); $("symptom").value = "";
+};
+$("diagFinish").onclick = async () => {
+  const qa = diagQuestions.map((q, i) => ({ q, a: $(`dq${i}`).value }));
+  const out = $("diagOut");
+  out.replaceChildren();
+  const thinking = el("div", "msg ai", "diagnosing...");
+  out.append(thinking);
+  $("diagFinish").disabled = true;
+  const r = await api("/api/diagnose/finish", { symptom: $("symptom").value, qa });
+  $("diagFinish").disabled = false;
+  thinking.textContent = r.ok ? r.data.answer : r.data.error;
+  if (!r.ok) thinking.className = "msg err";
+};
 
 /* ---------- load ---------- */
 
 async function refresh() {
   state = (await api("/api/state")).data;
-  renderCar(state.car);
-  renderDue();
-  renderHistory();
-  renderChips();
-  renderAI(state.ai);
+  renderCar(); renderDue(); renderWatch(); renderHistory(); renderChips(); renderAI(state.ai);
   if (!editing && !$("jkm").value && state.car) $("jkm").value = state.car.mileage;
 }
-
 $("jdate").value = today();
 refresh();
 </script>

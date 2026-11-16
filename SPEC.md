@@ -26,32 +26,32 @@ One place that:
 **Runs:** locally on my PC, free (Ollama). The AI brain stays swappable for Claude later.
 
 ### Milestone 1: Fast logging (1–2 sessions)
-- [ ] One-tap service chips instead of a dropdown
-- [ ] Odometer remembers the last mileage, so I only adjust it
-- [ ] **Log a whole job at once** (e.g. "restoration" = suspension + brakes + front end in one save)
-- [ ] Edit an entry (delete already done ✅)
-- [ ] **Car profile ("My Mercedes"):** created the moment you enter model, year and mileage, then remembered everywhere
-- [ ] **Optional VIN:** paste it and the app fills in what it can decode itself (maker, model series like 211, model year, body/engine code), so you type less
-- [ ] Mileage input styled like an odometer (the function now, the full styling in Milestone 4)
+- [x] One-tap service chips instead of a dropdown
+- [x] Odometer remembers the last mileage, so I only adjust it
+- [x] **Log a whole job at once** (e.g. "restoration" = suspension + brakes + front end in one save)
+- [x] Edit an entry (delete already done ✅)
+- [x] **Car profile ("My Mercedes"):** created the moment you enter model, year and mileage, then remembered everywhere
+- [x] **Optional VIN:** paste it and the app fills in what it can decode itself (maker, model series like 211, model year, body/engine code), so you type less
+- [x] Mileage input styled like an odometer (the function now, the full styling in Milestone 4)
 - **Done when:** logging a job takes under 15 seconds
 
 ### Milestone 2: W211 knowledge base (2 sessions)
-- [ ] A data file with the OM646 / W211 service intervals
-- [ ] Known issues by mileage (injector seals, turbo, EGR, engine mounts, timing chain...), each with symptoms and a source
-- [ ] "What's due" uses this data instead of my generic guesses
+- [x] A data file with the OM646 / W211 service intervals
+- [x] Known issues by mileage (injector seals, turbo, EGR, engine mounts, timing chain...), each with symptoms and a source
+- [x] "What's due" uses this data instead of my generic guesses
 - **Done when:** at 410,000 km the app warns me about the things that actually matter at that mileage
 
 ### Milestone 3: Two mechanic modes (2 sessions)
-- [ ] **Quick question:** ask anything, get a short answer using my history + the knowledge base
-- [ ] **Diagnosis session:** the mechanic asks *me* 3–5 questions first (what sound, when, engine hot or cold...), then gives a ranked list of likely causes
-- [ ] Safety-critical topics (brakes, steering) always end with "see a mechanic"
+- [x] **Quick question:** ask anything, get a short answer using my history + the knowledge base
+- [x] **Diagnosis session:** the mechanic asks *me* 3–5 questions first (what sound, when, engine hot or cold...), then gives a ranked list of likely causes
+- [x] Safety-critical topics (brakes, steering) always end with "see a mechanic"
 - **Done when:** a diagnosis session for "grinding when braking" asks sensible questions and ends with a clear answer
 
 ### Milestone 4: The luxury redesign (1 session)
-- [ ] Calm, premium, fast. Inspired by classic car culture, never using Mercedes/BMW logos
-- [ ] Our own animated emblem (a vintage-style crest, not the Mercedes star). Click it and the car view opens
-- [ ] A "my car" view with an illustration of the W211, plus key stats
-- [ ] Instrument-cluster look: odometer and gauges for mileage and what's due
+- [x] Calm, premium, fast. Inspired by classic car culture, never using Mercedes/BMW logos
+- [x] Our own animated emblem (a vintage-style crest, not the Mercedes star). Click it and the car view opens
+- [x] A "my car" view with an illustration of the W211, plus key stats
+- [x] Instrument-cluster look: odometer and gauges for mileage and what's due
 - **Rule:** design comes LAST, after it works
 
 ### Milestone 5: Ship (1 session)

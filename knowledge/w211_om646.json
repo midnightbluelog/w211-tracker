@@ -1,0 +1,127 @@
+{
+  "car": "Mercedes-Benz W211 E 220 CDI (OM646, 2002-2009)",
+  "disclaimer": "Built from widely shared W211/OM646 owner and workshop knowledge, adjusted for hot, dusty driving (Tunisia). Not an official Mercedes document. Always confirm with a mechanic, and follow your service booklet where it differs.",
+  "intervals": [
+    {"service": "oil change", "every_km": 10000, "every_months": 12, "why": "Engine oil + filter. 10,000 km is on the safe side for heat, dust and short trips. Use a diesel oil meeting MB 229.3 or 229.5."},
+    {"service": "air filter", "every_km": 20000, "every_months": 24, "why": "Dusty roads clog it faster than the book says. A clogged filter costs power and fuel."},
+    {"service": "fuel filter", "every_km": 20000, "every_months": 24, "why": "Diesel quality varies. The fuel filter protects the expensive common-rail injectors."},
+    {"service": "cabin filter", "every_km": 20000, "every_months": 12, "why": "Pollen/dust filter for the cabin air and A/C."},
+    {"service": "brake pads", "every_km": 30000, "why": "Pads wear with use, not time. This is an inspection reminder: check thickness and replace when worn."},
+    {"service": "brake fluid", "every_km": 40000, "every_months": 24, "why": "Brake fluid absorbs water over time and boils sooner. Change every 2 years whatever the mileage. Safety item."},
+    {"service": "coolant", "every_km": 100000, "every_months": 60, "why": "Old coolant corrodes the cooling system. Use the correct MB-approved coolant."},
+    {"service": "gearbox oil", "every_km": 80000, "why": "Manual gearbox oil is often called lifetime, but at high mileage a change keeps shifts smooth."},
+    {"service": "glow plugs", "every_km": 100000, "why": "Worn glow plugs make cold starts hard. Inspect around this mileage."}
+  ],
+  "issues": [
+    {
+      "id": "injector_seals",
+      "name": "Injector seal leak (\"black death\")",
+      "system": "engine",
+      "severity": "important",
+      "relevant_from_km": 80000,
+      "symptoms": ["ticking or puffing sound from the engine top", "diesel or exhaust smell in the cabin", "black crusty deposits around the injectors"],
+      "check": "Look under the engine cover around each injector for black tar-like crust. Fix early: once the carbon sets in, injectors get very hard to remove.",
+      "related_services": ["injector seals"]
+    },
+    {
+      "id": "injectors",
+      "name": "Worn injectors",
+      "system": "engine",
+      "severity": "important",
+      "relevant_from_km": 250000,
+      "symptoms": ["rough or shaky idle", "hard starting", "black or white smoke", "louder diesel knock", "higher fuel use"],
+      "check": "A diesel specialist can run a leak-off (return flow) test to see which injector is worn.",
+      "related_services": ["injectors"]
+    },
+    {
+      "id": "turbo",
+      "name": "Turbocharger wear",
+      "system": "engine",
+      "severity": "important",
+      "relevant_from_km": 250000,
+      "symptoms": ["loud whistle or siren sound under load", "loss of power", "blue or grey smoke", "oil inside the intercooler hoses"],
+      "check": "Check turbo shaft play and look for oil in the boost hoses. Let the engine idle 30 seconds before switching off after hard driving.",
+      "related_services": ["turbo"]
+    },
+    {
+      "id": "egr",
+      "name": "EGR valve and intake sooting",
+      "system": "engine",
+      "severity": "watch",
+      "relevant_from_km": 150000,
+      "symptoms": ["limp mode (power suddenly cut)", "flat spots when accelerating", "engine warning light", "rough idle"],
+      "check": "Read the fault codes, then have the EGR valve and intake cleaned. Short trips make it worse.",
+      "related_services": ["egr valve"]
+    },
+    {
+      "id": "timing_chain",
+      "name": "Timing chain and tensioner",
+      "system": "engine",
+      "severity": "important",
+      "relevant_from_km": 300000,
+      "symptoms": ["rattle for a few seconds at cold start", "metallic rattle at idle"],
+      "check": "At high mileage, have a mechanic check chain stretch. Ignoring a stretched chain can destroy the engine.",
+      "related_services": ["timing chain"]
+    },
+    {
+      "id": "engine_mounts",
+      "name": "Worn engine and gearbox mounts",
+      "system": "chassis",
+      "severity": "watch",
+      "relevant_from_km": 200000,
+      "symptoms": ["strong vibration at idle", "clunk when pulling away or shifting", "engine moving a lot when revved"],
+      "check": "Watch the engine while someone revs it gently in gear with the handbrake on.",
+      "related_services": ["engine mounts"]
+    },
+    {
+      "id": "sbc",
+      "name": "SBC brake system (if fitted)",
+      "system": "brakes",
+      "severity": "safety",
+      "relevant_from_km": 0,
+      "symptoms": ["\"Brake failure, visit workshop\" message", "brakes feel different or harder", "pump noise from the brake unit"],
+      "check": "Most W211s built until about 2006, including 2004 cars, have the electro-hydraulic SBC brakes. The SBC unit has a limited life. Ask a Mercedes specialist to read its status. Any SBC warning means see a mechanic before driving far.",
+      "related_services": ["sbc unit"]
+    },
+    {
+      "id": "thermostat",
+      "name": "Thermostat stuck open",
+      "system": "cooling",
+      "severity": "watch",
+      "relevant_from_km": 100000,
+      "symptoms": ["engine takes very long to warm up", "temperature gauge stays low", "weak cabin heating in winter"],
+      "check": "If the gauge doesn't reach about 80°C after 10-15 minutes of driving, the thermostat is likely stuck.",
+      "related_services": ["thermostat"]
+    },
+    {
+      "id": "glow_plugs",
+      "name": "Glow plugs",
+      "system": "engine",
+      "severity": "watch",
+      "relevant_from_km": 100000,
+      "symptoms": ["hard cold starts", "white smoke right after starting", "glow plug light stays on or flashes"],
+      "check": "A mechanic can test each glow plug's resistance. Replace the whole set.",
+      "related_services": ["glow plugs"]
+    },
+    {
+      "id": "belt",
+      "name": "Auxiliary belt and tensioner",
+      "system": "engine",
+      "severity": "watch",
+      "relevant_from_km": 120000,
+      "symptoms": ["squeal at start or with A/C on", "cracked belt", "tensioner wobbling"],
+      "check": "Look at the belt for cracks and the tensioner for wobble with the engine running.",
+      "related_services": ["belt", "belt tensioner"]
+    },
+    {
+      "id": "rust",
+      "name": "Rust spots",
+      "system": "body",
+      "severity": "watch",
+      "relevant_from_km": 0,
+      "symptoms": ["bubbling paint on door bottoms, wheel arches, boot lid", "rust around jacking points and subframes"],
+      "check": "Check underneath once a year, especially jacking points and subframe mounts. Treat small spots early.",
+      "related_services": ["bodywork", "bodywork & paint", "bodywork + paint", "rust treatment"]
+    }
+  ]
+}

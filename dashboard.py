@@ -13,8 +13,9 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-from mechanic import ai_status, ask_mechanic
-from tracker import INTERVALS, compute_status, last_done_km, load_log, save_log
+from knowledge import due_items, load_kb, watch_list
+from mechanic import ai_status, ask_mechanic, diagnose_finish, diagnose_start
+from tracker import load_log, save_log
 from vin import decode_vin
 
 HOST, PORT = "127.0.0.1", 5211
@@ -43,19 +44,6 @@ def to_km(value):
     """Accept 245000, '245 000' or '245,000'. Returns int or None."""
     text = str(value).replace(" ", "").replace(",", "")
     return int(text) if text.isdigit() else None
-
-
-def due_list(log, current_km):
-    rows = []
-    for service, interval in INTERVALS.items():
-        last = last_done_km(log, service)
-        if last is None:
-            rows.append({"service": service, "state": "never", "interval": interval})
-            continue
-        state, next_due, km_left = compute_status(last, interval, current_km)
-        rows.append({"service": service, "state": state, "km_left": km_left,
-                     "next_due": next_due, "last_km": last, "interval": interval})
-    return rows
 
 
 def bump_mileage(km):
@@ -98,12 +86,15 @@ class Handler(BaseHTTPRequestHandler):
             km = to_km(parse_qs(url.query).get("km", [""])[0])
             if km is None and car:
                 km = car.get("mileage")
+            kb = load_kb()
             self.send_json({
                 "car": car,
-                "services": list(INTERVALS),
+                "services": [it["service"] for it in kb["intervals"]],
                 "history": sorted(({**e, "idx": i} for i, e in enumerate(log)),
                                   key=lambda e: e["km"], reverse=True),
-                "due": due_list(log, km) if km is not None else None,
+                "due": due_items(log, km) if km is not None else None,
+                "watch": watch_list(log, km) if km is not None else None,
+                "disclaimer": kb["disclaimer"],
                 "ai": ai_status(),
             })
         elif url.path == "/api/vin":
@@ -196,6 +187,27 @@ class Handler(BaseHTTPRequestHandler):
             km = to_km(data.get("km", "")) or (car or {}).get("mileage")
             try:
                 answer = ask_mechanic(question, load_log(), km)
+            except RuntimeError as e:
+                return self.send_json({"error": str(e)}, 503)
+            self.send_json({"answer": answer})
+
+        elif self.path == "/api/diagnose/start":
+            symptom = str(data.get("symptom", "")).strip()
+            if not symptom:
+                return self.send_json({"error": "Describe the problem first."}, 400)
+            try:
+                questions = diagnose_start(symptom, load_log(), (load_car() or {}).get("mileage"))
+            except RuntimeError as e:
+                return self.send_json({"error": str(e)}, 503)
+            self.send_json({"questions": questions})
+
+        elif self.path == "/api/diagnose/finish":
+            symptom = str(data.get("symptom", "")).strip()
+            qa = [(str(p.get("q", "")), str(p.get("a", ""))) for p in data.get("qa", []) if isinstance(p, dict)]
+            if not symptom:
+                return self.send_json({"error": "Describe the problem first."}, 400)
+            try:
+                answer = diagnose_finish(symptom, qa, load_log(), (load_car() or {}).get("mileage"))
             except RuntimeError as e:
                 return self.send_json({"error": str(e)}, 503)
             self.send_json({"answer": answer})
