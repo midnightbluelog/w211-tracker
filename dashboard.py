@@ -69,7 +69,9 @@ class Handler(BaseHTTPRequestHandler):
             km = to_km(parse_qs(url.query).get("km", [""])[0])
             self.send_json({
                 "services": list(INTERVALS),
-                "history": sorted(log, key=lambda e: e["km"], reverse=True),
+                # each entry carries its position in the file, so the page can ask to delete it
+                "history": sorted(({**e, "idx": i} for i, e in enumerate(log)),
+                                  key=lambda e: e["km"], reverse=True),
                 "due": due_list(log, km) if km is not None else None,
                 "ai": ai_status(),
             })
@@ -90,6 +92,18 @@ class Handler(BaseHTTPRequestHandler):
             log.append(entry)
             save_log(log)
             self.send_json({"saved": entry})
+        elif self.path == "/api/delete":
+            log = load_log()
+            idx = data.get("idx")
+            # safety check: only delete if the entry at that position is the one the page showed
+            if not isinstance(idx, int) or not 0 <= idx < len(log):
+                return self.send_json({"error": "That entry doesn't exist anymore. Refresh the page."}, 404)
+            entry = log[idx]
+            if entry["service"] != data.get("service") or entry["km"] != data.get("km"):
+                return self.send_json({"error": "The log changed. Refresh the page and try again."}, 409)
+            log.pop(idx)
+            save_log(log)
+            self.send_json({"deleted": entry})
         elif self.path == "/api/ask":
             question = str(data.get("question", "")).strip()
             if not question:

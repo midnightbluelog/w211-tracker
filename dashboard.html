@@ -54,6 +54,9 @@
   table { width:100%; border-collapse:collapse; font-size:.88rem; }
   td { padding:8px 0; border-top:1px solid var(--line); vertical-align:top; }
   td.km, td.date { font-family:var(--mono); font-size:.78rem; color:var(--dim); white-space:nowrap; padding-right:12px; }
+  td.delcell { width:28px; text-align:right; }
+  button.del { background:none; color:var(--dim); padding:0 6px; font-size:1.1rem; line-height:1; font-weight:400; }
+  button.del:hover { color:var(--red); filter:none; }
   .empty { color:var(--dim); font-size:.88rem; margin:6px 0 0; }
   .ai-dot { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:6px; vertical-align:1px; background:var(--dim); }
   .ai-dot.on { background:var(--green); }
@@ -170,7 +173,20 @@ async function refresh() {
     const what = el("td");
     what.append(el("div", "", e.service));
     if (e.notes) what.append(el("div", "sub", e.notes));
-    tr.append(el("td", "date", e.date), el("td", "km", `${fmt(e.km)} km`), what);
+    const del = el("button", "del", "×");
+    del.title = "Delete this entry";
+    del.onclick = async () => {
+      if (!confirm(`Delete "${e.service}" at ${fmt(e.km)} km? This can't be undone.`)) return;
+      const res = await fetch("/api/delete", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idx: e.idx, service: e.service, km: e.km }),
+      });
+      if (!res.ok) alert((await res.json()).error);
+      refresh();
+    };
+    const delCell = el("td", "delcell");
+    delCell.append(del);
+    tr.append(el("td", "date", e.date), el("td", "km", `${fmt(e.km)} km`), what, delCell);
     hist.append(tr);
   });
 
