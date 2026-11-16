@@ -97,27 +97,25 @@ def last_done_km(log, service):
 
 def status_for(service, last_km, interval, current_km):
     """
-    YOUR TURN. Return ONE line of text saying whether this service is
-    overdue, due soon, or fine.
-
-    You get:
-      service     the name, e.g. "oil change"
-      last_km     mileage when it was last done, e.g. 240000
-      interval    how often it's due, e.g. 10000
-      current_km  the car's mileage right now, e.g. 249000
-
-    Example lines to return:
-      "  OVERDUE  oil change      by 1,200 km"
-      "  SOON     fuel filter     in 1,500 km"
-      "  OK       air filter      next at 270,000 km"
-
-    Hints:
-      1. When is it due next?  last done + interval
-      2. How far away is that? next due - current mileage
-      3. Use if / elif / else with SOON_KM to pick the line.
+    Spec written by midnightblue:
+      Step 1: next due = last done + interval
+      Step 2: km left  = next due - current mileage
+      If km left is negative        -> OVERDUE by that many km
+      If km left is exactly 0       -> DUE NOW: reached, change it now
+      Else if km left is 1 to 2,000 -> SOON, in that many km
+      Otherwise                     -> OK, next one at the next-due mileage
     """
-    # TODO: replace this line with your code
-    return f"  ???      {service:<15} (status_for not written yet)"
+    next_due = last_km + interval          # Step 1
+    km_left = next_due - current_km        # Step 2
+
+    if km_left < 0:
+        return f"  OVERDUE  {service:<15} by {abs(km_left):,} km"
+    elif km_left == 0:
+        return f"  DUE NOW  {service:<15} reached, change it now"
+    elif km_left <= SOON_KM:
+        return f"  SOON     {service:<15} in {km_left:,} km"
+    else:
+        return f"  OK       {service:<15} next at {next_due:,} km"
 
 
 def check_due(log):
