@@ -95,6 +95,20 @@ def last_done_km(log, service):
     return max(kms) if kms else None
 
 
+def compute_status(last_km, interval, current_km):
+    """The logic from my spec, shared by the terminal app and the dashboard.
+    Returns (state, next_due, km_left) where state is overdue / due_now / soon / ok."""
+    next_due = last_km + interval          # Step 1
+    km_left = next_due - current_km        # Step 2
+    if km_left < 0:
+        return "overdue", next_due, km_left
+    if km_left == 0:
+        return "due_now", next_due, km_left
+    if km_left <= SOON_KM:
+        return "soon", next_due, km_left
+    return "ok", next_due, km_left
+
+
 def status_for(service, last_km, interval, current_km):
     """
     Spec written by midnightblue:
@@ -105,14 +119,13 @@ def status_for(service, last_km, interval, current_km):
       Else if km left is 1 to 2,000 -> SOON, in that many km
       Otherwise                     -> OK, next one at the next-due mileage
     """
-    next_due = last_km + interval          # Step 1
-    km_left = next_due - current_km        # Step 2
+    state, next_due, km_left = compute_status(last_km, interval, current_km)
 
-    if km_left < 0:
+    if state == "overdue":
         return f"  OVERDUE  {service:<15} by {abs(km_left):,} km"
-    elif km_left == 0:
+    elif state == "due_now":
         return f"  DUE NOW  {service:<15} reached, change it now"
-    elif km_left <= SOON_KM:
+    elif state == "soon":
         return f"  SOON     {service:<15} in {km_left:,} km"
     else:
         return f"  OK       {service:<15} next at {next_due:,} km"
