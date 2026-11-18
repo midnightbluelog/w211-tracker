@@ -1,6 +1,8 @@
 # Your review guide: Milestones 1–4
 
-Claude built these. Your job: **use it, read it, explain it.** Do it in two sittings (~1 hour each). Milestone 5 (going public + post #2) only happens after this review.
+**Why this matters:** you're not checking Claude's homework. You're the first owner testing your own product. You own a 410,000 km W211, so you'll spot what's missing or annoying in ways the builder can't. That list *is* the roadmap, and finding it is the skill AI companies hire for.
+
+Claude built these. Your job: **use it like an owner first, then read it, then explain it.** Do it in two sittings (~1 hour each). Milestone 5 (going public + post #2) only happens after this review.
 
 ## Part A: Milestones 2–4 (do these after Part B below)
 

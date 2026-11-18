@@ -35,7 +35,8 @@ SERIES = {
 # Exact variants we're sure about. Grow this list carefully, one verified entry at a time.
 VARIANTS = {
     "211006": {"model": "E 220 CDI", "engine": "OM646 2.2 diesel", "body": "Saloon"},
-    "211206": {"model": "E 220 CDI", "engine": "OM646 2.2 diesel", "body": "Estate (S211)"},
+    "211206": {"model": "E 220 CDI", "engine": "OM646 2.2 diesel", "body": "Estate (S211)"},    
+    "211016": {"model": "E 270 CDI", "engine": "OM647 2.7 diesel", "body": "Saloon"},
 }
 
 
@@ -75,5 +76,5 @@ def decode_vin(vin):
 
 
 if __name__ == "__main__":
-    for test in ["WDB2110061A123456", "WDB2112061A123456", "WDB2030071A123456", "ABC", "WDB21100O1A123456"]:
+    for test in [ "WDB2110161A123456", "WDB2110061A123456", "WDB2112061A123456", "WDB2030071A123456", "ABC", "WDB21100O1A123456"]:
         print(test, "->", decode_vin(test))
