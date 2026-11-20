@@ -437,12 +437,13 @@ function toast(id, text, ok = true) { $(id).className = "toast " + (ok ? "ok" : 
 
 /* ---------- navigation: one screen at a time ---------- */
 
-function go(name) {
+function go(name, animate = true) {
   if (!SCREENS.includes(name)) name = "home";
   if (name === "showroom") renderShowroom();
   SCREENS.forEach((s) => { $(s).hidden = s !== name; });
   const scr = $(name);
-  scr.classList.remove("enter"); void scr.offsetWidth; scr.classList.add("enter");
+  scr.classList.remove("enter");
+  if (animate) { void scr.offsetWidth; scr.classList.add("enter"); }
   window.scrollTo({ top: 0 });
   current = name;
   history.replaceState(null, "", name === "home" ? location.pathname : "#" + name);
@@ -778,7 +779,7 @@ async function refresh() {
 }
 $("jdate").value = today();
 tick(); setInterval(tick, 30000);
-refresh().then(() => go(location.hash.slice(1) || "home"));
+refresh().then(() => go(location.hash.slice(1) || "home", false));
 </script>
 </body>
 </html>
