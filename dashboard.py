@@ -13,7 +13,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-from knowledge import due_items, load_kb, watch_list
+from knowledge import due_items, health_score, load_kb, watch_list
 from mechanic import ai_status, ask_mechanic, diagnose_finish, diagnose_start
 from tracker import load_log, save_log
 from vin import decode_vin
@@ -87,12 +87,14 @@ class Handler(BaseHTTPRequestHandler):
             if km is None and car:
                 km = car.get("mileage")
             kb = load_kb()
+            due = due_items(log, km) if km is not None else None
             self.send_json({
                 "car": car,
                 "services": [it["service"] for it in kb["intervals"]],
                 "history": sorted(({**e, "idx": i} for i, e in enumerate(log)),
                                   key=lambda e: e["km"], reverse=True),
-                "due": due_items(log, km) if km is not None else None,
+                "due": due,
+                "health": health_score(due),
                 "watch": watch_list(log, km) if km is not None else None,
                 "disclaimer": kb["disclaimer"],
                 "ai": ai_status(),

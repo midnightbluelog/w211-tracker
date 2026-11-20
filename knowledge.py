@@ -69,6 +69,57 @@ def due_items(log, current_km, today=None):
     return rows
 
 
+SAFETY_SERVICES = {"brake pads", "brake fluid"}
+SAFETY_CAP = 60   # overdue brakes: health can't go above this
+
+
+def _item_score(row):
+    """
+    How healthy one service is, from 0 to 1, based on how much of its interval is left
+    (by km or time, whichever is worse).
+      more than 20% left  -> 1.0  (normal wear isn't punished)
+      20% -> 0% left      -> 1.0 slides to 0.6
+      overdue             -> 0.6 slides to 0 (0 once it's 50% over)
+    """
+    life = row["km_left"] / row["interval"]
+    if row.get("days_left") is not None and row.get("months"):
+        life = min(life, row["days_left"] / (row["months"] * 30))
+    if life >= 0.2:
+        return 1.0
+    if life >= 0:
+        return 0.6 + 0.4 * (life / 0.2)
+    return max(0.0, 0.6 + 0.6 * (life / 0.5))
+
+
+def health_score(rows):
+    """
+    Two numbers, both weighted by how important each service is:
+      info      = how much of the car we have data on
+      condition = how healthy the services we DO know about are
+      health    = condition x info  (unknown services pull health down until you log them)
+    Overdue brakes cap health at SAFETY_CAP.
+    """
+    if not rows:
+        return None
+    weights = {it["service"]: it.get("weight", 1) for it in load_kb()["intervals"]}
+    total = sum(weights.get(r["service"], 1) for r in rows)
+    known = [r for r in rows if r["state"] != "never"]
+    known_w = sum(weights.get(r["service"], 1) for r in known)
+    info = known_w / total
+    condition = (sum(weights.get(r["service"], 1) * _item_score(r) for r in known) / known_w) if known else 0
+    health = round(100 * condition * info)
+    capped = any(r["service"] in SAFETY_SERVICES and r["state"] == "overdue" for r in known)
+    if capped:
+        health = min(health, SAFETY_CAP)
+    return {
+        "health": health,
+        "info": round(100 * info),
+        "condition": round(100 * condition),
+        "unknown": [r["service"] for r in rows if r["state"] == "never"],
+        "brakes_capped": capped,
+    }
+
+
 def watch_list(log, current_km):
     """Known issues that matter at this mileage, minus the ones you've already dealt with."""
     done = {e["service"].lower() for e in log}
