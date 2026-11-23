@@ -202,6 +202,41 @@
 
   .bar b { cursor:pointer; }
 
+  /* ---------- journal (v1.2): a minimal logbook timeline ---------- */
+  .jtop { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
+  .jform { border:1px dashed var(--amber-faint); padding:14px; margin-bottom:18px; }
+  .jpub { display:flex; gap:8px; align-items:center; color:var(--amber); }
+  .jpub input { width:auto; }
+  .jhint { color:var(--amber-dim); margin:0; }
+  .jthumbs { display:flex; gap:6px; flex-wrap:wrap; }
+  .jthumbs img { width:64px; height:64px; object-fit:cover; border:1px solid var(--amber-faint); }
+  .jline { list-style:none; margin:0; padding:0 0 0 18px; border-left:2px solid var(--amber-faint); }
+  .jline > li { position:relative; margin:0 0 22px; }
+  .jline > li::before { content:""; position:absolute; left:-24px; top:18px; width:10px; height:10px; background:var(--amber); }
+  .jcard { display:grid; grid-template-columns:120px minmax(0,1fr); gap:14px; cursor:pointer; padding:10px; border:1px solid var(--amber-faint); background:rgba(10,6,2,.5); }
+  .jcard:hover, .jcard:focus-visible { border-color:var(--amber-dim); outline:none; }
+  .jcard .cover { width:120px; height:90px; object-fit:cover; display:block; border:1px solid var(--amber-faint); filter:sepia(.25); }
+  .jcard .nocover { width:120px; height:90px; display:flex; align-items:center; justify-content:center; border:1px dashed var(--amber-faint); color:var(--amber-dim); font:22px var(--lcd); }
+  .jcard h3 { margin:0 0 4px; font:22px var(--lcd); color:var(--amber-hi); letter-spacing:.02em; }
+  .jcard .jmeta { font-size:17px; color:var(--amber-dim); }
+  .jstamp { display:inline-block; font:8px var(--pixel); color:var(--amber); border:1px solid var(--amber); padding:4px 6px; margin-top:8px; }
+  .jbadge { font:7px var(--pixel); padding:3px 5px; margin-left:6px; color:var(--lcd-bg); background:var(--amber-dim); vertical-align:2px; }
+  .jbadge.priv { background:transparent; color:var(--amber-dim); border:1px dashed var(--amber-dim); }
+  .jopen { grid-column:1 / -1; font-size:18px; color:var(--amber); }
+  .jopen .gal { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:8px; margin:10px 0; }
+  .jopen .gal img { width:100%; aspect-ratio:4/3; object-fit:cover; border:1px solid var(--amber-faint); cursor:zoom-in; }
+  .jopen .gal.one { grid-template-columns:minmax(0, 520px); }
+  .jopen .gal.one img { aspect-ratio:auto; max-height:420px; object-fit:contain; background:#000; }
+  .jopen .gal img:hover, .jopen .gal img:focus-visible { border-color:var(--amber); outline:none; }
+  /* full-screen viewer */
+  .pv { position:fixed; inset:0; z-index:100; background:rgba(5,3,1,.94); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:16px; }
+  .pv[hidden] { display:none; }
+  .pv img { max-width:100%; max-height:calc(100vh - 110px); object-fit:contain; border:1px solid var(--amber-faint); }
+  .pv .pvbar { display:flex; gap:10px; align-items:center; margin-top:12px; color:var(--amber-dim); font-size:18px; }
+  .pv .pvclose { position:absolute; top:12px; right:12px; }
+  .jopen .acts { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  @media (max-width:520px) { .jcard { grid-template-columns:88px minmax(0,1fr); } .jcard .cover, .jcard .nocover { width:88px; height:70px; } }
+
   /* ---------- phone: the rail becomes a bottom tab bar ---------- */
   @media (max-width:820px) {
     .app { grid-template-columns:1fr; padding-bottom:calc(88px + env(safe-area-inset-bottom, 0px)); }
@@ -241,6 +276,7 @@
     <button data-go="watch"><span class="ic">⚠</span>WATCH<span class="cnt"></span></button>
     <button data-go="mechanic"><span class="ic">◈</span>MECHANIC<span class="cnt"></span></button>
     <button data-go="history"><span class="ic">≡</span>HISTORY<span class="cnt"></span></button>
+    <button data-go="journal"><span class="ic">❏</span>JOURNAL<span class="cnt"></span></button>
     <button data-go="car"><span class="ic">✎</span>CAR<span class="cnt"></span></button>
     <p class="tagline">your classic, looked after.</p>
   </nav>
@@ -285,6 +321,7 @@
           <li><button data-go="watch"><span class="arrow">⚠</span>WATCH LIST<span class="count" id="cWatch"></span></button></li>
           <li><button data-go="mechanic"><span class="arrow">◈</span>MECHANIC<span class="count" id="cAI"></span></button></li>
           <li><button data-go="history"><span class="arrow">≡</span>HISTORY<span class="count" id="cHist"></span></button></li>
+          <li><button data-go="journal"><span class="arrow">❏</span>JOURNAL<span class="count" id="cJournal">your car's story</span></button></li>
           <li><button data-go="showroom"><span class="arrow">◐</span>SHOWROOM<span class="count">your car, on display</span></button></li>
         </ul>
         <p class="foot">tip: Esc goes back to the dashboard</p>
@@ -370,6 +407,41 @@
         <p class="empty" id="histEmpty">Nothing logged yet.</p>
       </section>
 
+      <!-- JOURNAL (v1.2) -->
+      <section class="screen" id="journal" hidden>
+        <div class="bar"><span>JOURNAL</span><b class="backlink">◀ DASHBOARD</b></div>
+        <div class="jtop">
+          <div class="chips" id="jFilters"></div>
+          <button class="btn" id="jNewBtn">＋ NEW ENTRY</button>
+        </div>
+        <div class="stack jform" id="jForm" hidden>
+          <div><label for="jtTitle">Title</label><input id="jtTitle" placeholder="first drive by the sea"></div>
+          <div class="row">
+            <div><label for="jtDate">Date</label><input id="jtDate" type="date"></div>
+            <div><label for="jtKm">Mileage (km)</label><input id="jtKm" inputmode="numeric"></div>
+            <div><label for="jtMood">Mood</label><input id="jtMood" placeholder="happy, proud, annoyed..."></div>
+          </div>
+          <div><label for="jtNote">How it drives / what changed</label><textarea id="jtNote" rows="3"></textarea></div>
+          <div class="row">
+            <div><label for="jtJob">Linked job (optional)</label><select id="jtJob"></select></div>
+            <div><label for="jtCost">Cost (optional)</label><input id="jtCost" placeholder="350 TND"></div>
+          </div>
+          <div><label for="jtPhotos">Photos (up to 12)</label><input id="jtPhotos" type="file" accept="image/*" multiple></div>
+          <div class="jthumbs" id="jtThumbs"></div>
+          <label class="jpub"><input type="checkbox" id="jtPublic" checked> public (shared later, when the app goes online)</label>
+          <p class="small jhint">Before sharing: check your photos for plates and faces. Location data is removed automatically.</p>
+          <div class="row"><div class="toast" id="jToast"></div><button class="btn ghost" id="jCancel">CANCEL</button><button class="btn" id="jSave">SAVE ENTRY</button></div>
+        </div>
+        <ol class="jline" id="jList"></ol>
+        <p class="empty" id="jEmpty">No entries yet. Start with a photo of your car and how it feels to drive.</p>
+      </section>
+
+      <div class="pv" id="pv" hidden role="dialog" aria-modal="true" aria-label="Photo viewer">
+        <button class="btn ghost pvclose" id="pvClose">CLOSE ✕</button>
+        <img id="pvImg" alt="">
+        <div class="pvbar"><button class="btn ghost" id="pvPrev">◀</button><span id="pvCount"></span><button class="btn ghost" id="pvNext">▶</button></div>
+      </div>
+
       <!-- CAR SETUP -->
       <section class="screen" id="car" hidden>
         <div class="bar"><span>CAR SETUP</span><b class="backlink">◀ DASHBOARD</b></div>
@@ -435,7 +507,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 const LABELS = { overdue: "OVERDUE", due_now: "DUE NOW", soon: "SOON", ok: "OK", never: "NO DATA",
                  checked_ok: "CHECKED", checked_bad: "LOOKS BAD" };
 const SEV = { safety: "SAFETY", important: "IMPORTANT", watch: "WATCH" };
-const SCREENS = ["home", "service", "log", "watch", "mechanic", "history", "car", "showroom"];
+const SCREENS = ["home", "service", "log", "watch", "mechanic", "history", "journal", "car", "showroom"];
 
 let state = null, selected = new Set(), extraChips = [], editing = null, diagQuestions = [];
 let current = "home";
@@ -459,6 +531,7 @@ function toast(id, text, ok = true) { $(id).className = "toast " + (ok ? "ok" : 
 function go(name, animate = true) {
   if (!SCREENS.includes(name)) name = "home";
   if (name === "showroom") renderShowroom();
+  if (name === "journal") loadJournal();
   SCREENS.forEach((s) => { $(s).hidden = s !== name; });
   const scr = $(name);
   scr.classList.remove("enter");
@@ -844,12 +917,166 @@ $("diagFinish").onclick = async () => {
   if (!r.ok) thinking.className = "msg err";
 };
 
+/* ---------- journal (v1.2) ---------- */
+
+let journal = [], jFilter = "all", jPhotos = [], jOpen = null;
+const J_FILTERS = [["all", "ALL"], ["job", "JOBS"], ["free", "MOMENTS"], ["private", "PRIVATE"]];
+
+async function loadJournal() {
+  journal = (await api("/api/journal")).data.entries || [];
+  renderJournal();
+}
+function renderJournal() {
+  const f = $("jFilters");
+  f.replaceChildren();
+  J_FILTERS.forEach(([key, label]) => {
+    const b = el("button", "chip" + (jFilter === key ? " on" : ""), label);
+    b.type = "button";
+    b.onclick = () => { jFilter = key; renderJournal(); };
+    f.append(b);
+  });
+  const shown = journal.filter((e) => jFilter === "all" || (jFilter === "job" && e.job)
+    || (jFilter === "free" && !e.job) || (jFilter === "private" && !e.public));
+  const list = $("jList");
+  list.replaceChildren();
+  $("jEmpty").hidden = journal.length > 0;
+  shown.forEach((e) => {
+    const li = el("li");
+    const card = el("div", "jcard");
+    card.tabIndex = 0;
+    if (e.photos.length) {
+      const img = el("img", "cover"); img.src = "/photos/" + e.photos[0]; img.alt = e.title; img.loading = "lazy";
+      card.append(img);
+    } else card.append(el("div", "nocover", "no photo"));
+    const info = el("div");
+    const h = el("h3", "", e.title);
+    h.append(el("span", "jbadge" + (e.public ? "" : " priv"), e.public ? "PUBLIC" : "PRIVATE"));
+    info.append(h, el("div", "jmeta", [e.date, e.mood].filter(Boolean).join(" · ")));
+    if (e.km) info.append(el("span", "jstamp", fmt(e.km) + " KM"));
+    card.append(info);
+    if (jOpen === e.id) card.append(journalDetail(e));
+    card.onclick = (ev) => { if (ev.target.closest(".acts, .gal")) return; jOpen = jOpen === e.id ? null : e.id; renderJournal(); };
+    card.onkeydown = (ev) => { if (ev.key === "Enter") card.click(); };
+    li.append(card);
+    list.append(li);
+  });
+  $("cJournal").textContent = journal.length ? `${journal.length} entr${journal.length > 1 ? "ies" : "y"}` : "your car's story";
+}
+function journalDetail(e) {
+  const d = el("div", "jopen");
+  if (e.note) d.append(el("p", "", e.note));
+  const extra = [e.job && `job: ${e.job}`, e.cost && `cost: ${e.cost}`].filter(Boolean).join(" · ");
+  if (extra) d.append(el("div", "jmeta", extra));
+  if (e.photos.length) {
+    // every photo, big, and each one opens full screen
+    const gal = el("div", "gal" + (e.photos.length === 1 ? " one" : ""));
+    e.photos.forEach((p, i) => {
+      const img = el("img"); img.src = "/photos/" + p; img.alt = `${e.title}, photo ${i + 1}`; img.loading = "lazy";
+      img.tabIndex = 0;
+      img.onclick = () => openViewer(e, i);
+      img.onkeydown = (ev) => { if (ev.key === "Enter") openViewer(e, i); };
+      gal.append(img);
+    });
+    d.append(gal);
+  }
+  const acts = el("div", "acts");
+  const vis = el("button", "btn ghost", e.public ? "MAKE PRIVATE" : "MAKE PUBLIC");
+  vis.onclick = async () => { await api("/api/journal/visibility", { id: e.id, public: !e.public }); loadJournal(); };
+  const del = el("button", "btn ghost", "DELETE");
+  del.onclick = async () => {
+    if (!confirm(`Delete "${e.title}" and its photos from this PC? This can't be undone.`)) return;
+    await api("/api/journal/delete", { id: e.id }); jOpen = null; loadJournal();
+  };
+  acts.append(vis, del);
+  d.append(acts);
+  return d;
+}
+
+/* full-screen photo viewer: click a photo, arrows or swipe-free buttons to move, Esc or click outside to close */
+let viewer = null;
+function openViewer(e, i) {
+  viewer = { photos: e.photos, i, title: e.title };
+  $("pv").hidden = false;
+  showViewer();
+  $("pvClose").focus();
+}
+function showViewer() {
+  const { photos, i, title } = viewer;
+  $("pvImg").src = "/photos/" + photos[i];
+  $("pvImg").alt = `${title}, photo ${i + 1}`;
+  $("pvCount").textContent = `${title} · ${i + 1} / ${photos.length}`;
+  $("pvPrev").hidden = $("pvNext").hidden = photos.length < 2;
+}
+function stepViewer(d) { if (!viewer) return; viewer.i = (viewer.i + d + viewer.photos.length) % viewer.photos.length; showViewer(); }
+function closeViewer() { viewer = null; $("pv").hidden = true; }
+$("pvPrev").onclick = (ev) => { ev.stopPropagation(); stepViewer(-1); };
+$("pvNext").onclick = (ev) => { ev.stopPropagation(); stepViewer(1); };
+$("pvClose").onclick = closeViewer;
+$("pv").onclick = (ev) => { if (ev.target.id === "pv") closeViewer(); };
+document.addEventListener("keydown", (ev) => {
+  if (!viewer) return;
+  if (ev.key === "ArrowLeft") stepViewer(-1);
+  else if (ev.key === "ArrowRight") stepViewer(1);
+  else if (ev.key === "Escape") { ev.stopImmediatePropagation(); closeViewer(); }
+}, true);
+
+/* photos are redrawn on a canvas: smaller files, and hidden data (like GPS location) is dropped */
+function shrinkPhoto(file, max = 2560) {   // sharp on a big screen, still a few hundred KB
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      resolve(c.toDataURL("image/jpeg", 0.9));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error(`Couldn't read ${file.name}.`)); };
+    img.src = url;
+  });
+}
+function resetJournalForm() {
+  ["jtTitle", "jtNote", "jtMood", "jtCost"].forEach((id) => { $(id).value = ""; });
+  $("jtDate").value = today(); $("jtKm").value = state?.car?.mileage ?? "";
+  $("jtPublic").checked = true; $("jtPhotos").value = ""; jPhotos = [];
+  $("jtThumbs").replaceChildren(); toast("jToast", "");
+  const jobs = [...new Set((state?.history || []).map((h) => h.service))];
+  $("jtJob").replaceChildren(el("option", "", "none"), ...jobs.map((j) => el("option", "", j)));
+  $("jtJob").options[0].value = "";
+}
+$("jNewBtn").onclick = () => { resetJournalForm(); $("jForm").hidden = false; $("jtTitle").focus(); };
+$("jCancel").onclick = () => { $("jForm").hidden = true; };
+$("jtPhotos").onchange = async () => {
+  const files = [...$("jtPhotos").files].slice(0, 12);
+  toast("jToast", "preparing photos...");
+  try { jPhotos = await Promise.all(files.map((f) => shrinkPhoto(f))); }
+  catch (err) { jPhotos = []; return toast("jToast", err.message, false); }
+  $("jtThumbs").replaceChildren(...jPhotos.map((src) => { const i = el("img"); i.src = src; i.alt = ""; return i; }));
+  toast("jToast", `${jPhotos.length} photo${jPhotos.length === 1 ? "" : "s"} ready`);
+};
+$("jSave").onclick = async () => {
+  if (!$("jtTitle").value.trim()) return toast("jToast", "Give the entry a title.", false);
+  $("jSave").disabled = true; toast("jToast", "saving...");
+  const r = await api("/api/journal", {
+    title: $("jtTitle").value, date: $("jtDate").value, km: $("jtKm").value, mood: $("jtMood").value,
+    note: $("jtNote").value, job: $("jtJob").value, cost: $("jtCost").value,
+    public: $("jtPublic").checked, photos: jPhotos,
+  });
+  $("jSave").disabled = false;
+  if (!r.ok) return toast("jToast", r.data.error, false);
+  $("jForm").hidden = true; jOpen = r.data.saved.id;
+  await loadJournal();
+};
+
 /* ---------- load ---------- */
 
 function tick() { $("clock").textContent = new Date().toTimeString().slice(0, 5); }
 async function refresh() {
   state = (await api("/api/state")).data;
   renderCar(); renderCounts(); renderDue(); renderWatch(); renderHistory(); renderChips(); renderAI(state.ai);
+  loadJournal();
   if (!editing && !$("jkm").value && state.car) $("jkm").value = state.car.mileage;
   if (state.car && !$("vin").value) fillCarForm();
 }

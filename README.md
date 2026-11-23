@@ -16,6 +16,7 @@ It's my first real project on the way to working with AI agents. I write the spe
 - **Ask, don't guess (v1.1).** When the app has no data on something (brake fluid, coolant, glow plugs), it shows a short guide to check it yourself: how to look, what fine / getting old / bad look like. Tap what you saw. A "looks fine" check counts half and expires after 3 months; "looks bad" counts as overdue.
 - **Talks at your level (v1.1).** Tell it how much you know about cars. The AI mechanic adapts, and every answer has "simpler please" / "skip the basics" buttons.
 - **AI mechanic.** Ask a quick question, or run a diagnosis session: describe the problem, answer 4 questions, get a ranked list of likely causes. It runs locally with [Ollama](https://ollama.com), so it's free and nothing leaves your PC.
+- **Car journal (v1.2).** Your car's story: entries with photos, how it drives, mood, cost, an optional link to a job. Public or private per entry (nothing leaves your PC yet). Photos are shrunk and stripped of hidden location data. The AI mechanic reads your notes.
 - **Works on phone and desktop:** a side menu on desktop, a bottom tab bar on phone.
 
 | What's due | Showroom | Phone |
@@ -57,7 +58,7 @@ It opens at `http://127.0.0.1:5211`.
 
 For the AI mechanic, install [Ollama](https://ollama.com) and run `ollama pull llama3.2:3b`. Everything else works without it.
 
-Your car details, service log and checks are saved in `car.json`, `service_log.json` and `checks.json` next to the script. They stay on your machine and are not part of this repo.
+Your car details, service log and checks are saved in `car.json`, `service_log.json`, `checks.json`, `journal.json` and `journal_photos/` next to the script. They stay on your machine and are not part of this repo.
 
 ## Honest limits
 
@@ -84,7 +85,8 @@ Your car details, service log and checks are saved in `car.json`, `service_log.j
 - [x] Watch list and AI mechanic
 - [x] Honest health score and redesign
 - [x] v1.1: guided checks, talks at your level, fixes from my own testing
-- [ ] v1.2: a car journal (photos, before/after, how it drives) that the AI mechanic reads
+- [x] v1.2: a car journal (photos, notes, mood, cost, public/private) that the AI mechanic reads
+- [ ] v1.3: the AI looks at your photos too (Claude API)
 - [ ] More W211 engines, then other pre-2010 Mercedes and BMW
 
 ## The story

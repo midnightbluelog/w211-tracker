@@ -13,6 +13,9 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
+import uuid
+
+from journal import MAX_PHOTOS, delete_photos, load_journal, photo_path, save_journal, save_photo
 from knowledge import due_items, health_score, load_kb, watch_list
 from mechanic import LEVELS, ai_status, ask_mechanic, diagnose_finish, diagnose_start
 from tracker import load_log, save_log
@@ -117,6 +120,18 @@ class Handler(BaseHTTPRequestHandler):
             })
         elif url.path == "/api/vin":
             self.send_json(decode_vin(parse_qs(url.query).get("vin", [""])[0]))
+        elif url.path == "/api/journal":
+            self.send_json({"entries": sorted(load_journal(), key=lambda e: e["date"], reverse=True)})
+        elif url.path.startswith("/photos/"):
+            p = photo_path(url.path[len("/photos/"):])
+            if not p:
+                return self.send_json({"error": "not found"}, 404)
+            body = p.read_bytes()
+            self.send_response(200)
+            self.send_header("Content-Type", "image/jpeg")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
         else:
             self.send_json({"error": "not found"}, 404)
 
@@ -199,6 +214,52 @@ class Handler(BaseHTTPRequestHandler):
             checks.append(entry)
             save_checks(checks)
             self.send_json({"saved": entry})
+
+        elif self.path == "/api/journal":
+            # v1.2: a new journal entry. Everything but the title is optional.
+            title = str(data.get("title", "")).strip()
+            photos = data.get("photos") or []
+            if not title:
+                return self.send_json({"error": "Give the entry a title."}, 400)
+            if not isinstance(photos, list) or len(photos) > MAX_PHOTOS:
+                return self.send_json({"error": f"Up to {MAX_PHOTOS} photos per entry."}, 400)
+            saved = []
+            try:
+                for p in photos:
+                    saved.append(save_photo(p))
+            except (ValueError, TypeError) as e:
+                delete_photos(saved)
+                return self.send_json({"error": str(e) or "One of the photos couldn't be read."}, 400)
+            cost = str(data.get("cost", "")).strip()
+            entry = {
+                "id": uuid.uuid4().hex,
+                "title": title,
+                "date": str(data.get("date") or date.today()),
+                "km": to_km(data.get("km", "")),
+                "note": str(data.get("note", "")).strip(),
+                "mood": str(data.get("mood", "")).strip().lower(),
+                "job": str(data.get("job", "")).strip().lower(),
+                "cost": cost,
+                "public": data.get("public", True) is not False,   # decision 3: public by default
+                "photos": saved,
+            }
+            entries = load_journal()
+            entries.append(entry)
+            save_journal(entries)
+            self.send_json({"saved": entry})
+
+        elif self.path in ("/api/journal/visibility", "/api/journal/delete"):
+            entries = load_journal()
+            entry = next((e for e in entries if e["id"] == data.get("id")), None)
+            if not entry:
+                return self.send_json({"error": "That entry doesn't exist anymore. Refresh the page."}, 404)
+            if self.path.endswith("visibility"):
+                entry["public"] = bool(data.get("public"))
+            else:
+                entries.remove(entry)
+                delete_photos(entry["photos"])
+            save_journal(entries)
+            self.send_json({"ok": True, "entry": entry})
 
         elif self.path == "/api/edit":
             log = load_log()

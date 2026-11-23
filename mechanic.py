@@ -13,6 +13,7 @@ import re
 import urllib.error
 import urllib.request
 
+from journal import journal_context, load_journal
 from knowledge import due_items, kb_context
 
 OLLAMA_URL = "http://127.0.0.1:11434"
@@ -49,7 +50,8 @@ def _system(level, log, current_km, adjust=None):
     parts = [SYSTEM_PROMPT, LEVELS.get(level, LEVELS["basics"]), READ_THE_OWNER]
     if adjust in ADJUST:
         parts.append(ADJUST[adjust])
-    return " ".join(parts) + "\n\n" + history_context(log, current_km)
+    journal = journal_context(load_journal())   # v1.2: the AI reads the owner's journal notes
+    return " ".join(parts) + "\n\n" + history_context(log, current_km) + ("\n\n" + journal if journal else "")
 
 
 SAFETY_WORDS =("brake", "frein", "steer", "direction", "tyre", "tire", "pneu", "sbc", "wheel", "roue")
