@@ -1,6 +1,7 @@
 # personal car data stays private
 service_log.json
 car.json
+checks.json
 
 # secrets (API keys) live here and must NEVER be pushed
 .env

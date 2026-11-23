@@ -123,6 +123,14 @@
   .tag.ok { color:var(--amber-dim); }
   .tag.soon, .tag.important, .tag.watch { color:var(--amber); }
   .tag.never { color:var(--amber-dim); border-style:dashed; }
+  .tag.checked_ok { color:var(--amber); border-style:dashed; }
+  .tag.checked_bad { background:var(--alarm); color:var(--lcd-bg); border-color:var(--alarm); text-shadow:none; }
+  .guide { margin-top:8px; padding:10px; border:1px dashed var(--amber-faint); font-size:18px; color:var(--amber-dim); }
+  .guide ol { margin:0 0 8px; padding-left:20px; }
+  .list .guide ol li { display:list-item; border:0; padding:2px 0; }
+  .guide .looks div { margin:2px 0; }
+  .guide .looks b { color:var(--amber); font-weight:400; }
+  .guide .acts { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
   .tag.due_now { background:var(--amber); color:var(--lcd-bg); text-shadow:none; }
   .tag.overdue, .tag.safety { background:var(--alarm); color:var(--lcd-bg); border-color:var(--alarm); text-shadow:none; animation:blink 1.2s steps(2) infinite; }
   @media (prefers-reduced-motion: reduce) { .tag.overdue, .tag.safety { animation:none; } }
@@ -136,7 +144,7 @@
 
   /* forms */
   label { display:block; font-size:17px; color:var(--amber-dim); margin-bottom:3px; }
-  input, textarea {
+  input, textarea, select {
     width:100%; background:#0a0602; color:var(--amber-hi); border:2px solid var(--amber-faint); padding:7px 9px;
     font:20px var(--lcd); outline:none; border-radius:0; text-shadow:inherit;
   }
@@ -286,6 +294,7 @@
       <section class="screen" id="service" hidden>
         <div class="bar"><span>SERVICE</span><b class="backlink">◀ DASHBOARD</b></div>
         <ul class="list" id="due"></ul>
+        <div class="toast" id="checkToast" aria-live="polite"></div>
         <p class="empty" id="dueEmpty">Set up your car to see what's due.</p>
         <p class="foot" id="disclaimer"></p>
       </section>
@@ -306,6 +315,7 @@
             <div><label for="jkm">Mileage (km)</label><input id="jkm" inputmode="numeric"></div>
             <div><label for="jdate">Date</label><input id="jdate" type="date"></div>
           </div>
+          <div id="oilRow" hidden><label for="joil">Oil spec (what's on the bottle)</label><input id="joil" placeholder="5W-40, MB 229.5"></div>
           <div><label for="jnotes">Notes (optional)</label><input id="jnotes" placeholder="parts, garage, price..."></div>
           <div class="row">
             <div class="toast" id="jobToast"></div>
@@ -377,11 +387,19 @@
           <div class="row">
             <div><label for="engine">Engine</label><input id="engine" placeholder="OM646 2.2 diesel"></div>
             <div><label for="body">Body</label><input id="body" placeholder="Saloon"></div>
-            <div><label for="year">Year</label><input id="year" inputmode="numeric" placeholder="2004"></div>
+            <div><label for="year">Year</label><input id="year" inputmode="numeric" maxlength="4" placeholder="2004"></div>
           </div>
           <div class="row">
             <div><label for="nickname">Nickname</label><input id="nickname" placeholder="the silver one"></div>
             <div><label for="mileage">Mileage (km)</label><input id="mileage" inputmode="numeric" placeholder="410000"></div>
+          </div>
+          <div class="row">
+            <div><label for="level">How much do you know about cars?</label>
+              <select id="level">
+                <option value="beginner">Not much, explain everything</option>
+                <option value="basics" selected>The basics</option>
+                <option value="pro">Mechanic level, skip the basics</option>
+              </select></div>
           </div>
           <div class="row"><div class="toast" id="carToast"></div><button class="btn" id="carSave">SAVE CAR</button></div>
         </div>
@@ -414,7 +432,8 @@
 const $ = (id) => document.getElementById(id);
 const fmt = (n) => Number(n).toLocaleString("en-US");
 const today = () => new Date().toISOString().slice(0, 10);
-const LABELS = { overdue: "OVERDUE", due_now: "DUE NOW", soon: "SOON", ok: "OK", never: "NO DATA" };
+const LABELS = { overdue: "OVERDUE", due_now: "DUE NOW", soon: "SOON", ok: "OK", never: "NO DATA",
+                 checked_ok: "CHECKED", checked_bad: "LOOKS BAD" };
 const SEV = { safety: "SAFETY", important: "IMPORTANT", watch: "WATCH" };
 const SCREENS = ["home", "service", "log", "watch", "mechanic", "history", "car", "showroom"];
 
@@ -524,6 +543,7 @@ $("odoSave").onclick = async () => {
 function fillCarForm() {
   if (!state?.car) return;
   ["make", "model", "engine", "body", "year", "nickname", "mileage", "vin"].forEach((k) => { $(k).value = state.car[k] ?? ""; });
+  $("level").value = state.car.level || "basics";
   $("setupHint").textContent = "Edit your car details.";
 }
 $("decode").onclick = async () => {
@@ -539,7 +559,7 @@ $("decode").onclick = async () => {
 };
 $("carSave").onclick = async () => {
   const body = {};
-  ["make", "model", "engine", "body", "year", "nickname", "mileage", "vin"].forEach((k) => { body[k] = $(k).value; });
+  ["make", "model", "engine", "body", "year", "nickname", "mileage", "vin", "level"].forEach((k) => { body[k] = $(k).value; });
   const r = await api("/api/car", body);
   if (r.ok) { toast("carToast", "saved"); await refresh(); go("home"); } else toast("carToast", r.data.error, false);
 };
@@ -583,6 +603,7 @@ function renderChips() {
   add.type = "button";
   add.onclick = () => { $("customRow").hidden = false; $("custom").focus(); };
   box.append(add);
+  $("oilRow").hidden = editing || !selected.has("oil change");   // oil spec only when logging an oil change
 }
 $("customAdd").onclick = () => {
   const name = $("custom").value.trim().toLowerCase();
@@ -597,7 +618,7 @@ $("custom").addEventListener("keydown", (e) => { if (e.key === "Enter") $("custo
 function resetJobForm() {
   editing = null; selected = new Set();
   $("jkm").value = state?.car?.mileage ?? "";
-  $("jdate").value = today(); $("jnotes").value = "";
+  $("jdate").value = today(); $("jnotes").value = ""; $("joil").value = "";
   $("jobSave").textContent = "SAVE JOB"; $("cancelEdit").hidden = true;
   $("logTitle").textContent = "LOG JOB";
   renderChips(); renderHistory();
@@ -612,7 +633,11 @@ $("jobSave").onclick = async () => {
       service: services[0] || "", km: $("jkm").value, date: $("jdate").value, notes: $("jnotes").value });
     if (r.ok) toast("jobToast", `updated: ${r.data.updated.service}`);
   } else {
-    r = await api("/api/job", { services, km: $("jkm").value, date: $("jdate").value, notes: $("jnotes").value });
+    const job = { services, km: $("jkm").value, date: $("jdate").value, notes: $("jnotes").value,
+                  oil_spec: selected.has("oil change") ? $("joil").value : "" };
+    r = await api("/api/job", job);
+    // v1.1: duplicate warning, the owner decides
+    if (!r.ok && r.data.duplicate && confirm(`${r.data.error}\nSave anyway?`)) r = await api("/api/job", { ...job, force: true });
     if (r.ok) toast("jobToast", `saved ${r.data.saved.length} item${r.data.saved.length > 1 ? "s" : ""} at ${fmt(r.data.saved[0].km)} km`);
   }
   if (!r.ok) return toast("jobToast", r.data.error, false);
@@ -624,7 +649,9 @@ $("jobSave").onclick = async () => {
 /* ---------- what's due + watch list ---------- */
 
 function dueDetail(r) {
-  if (r.state === "never") return `every ${fmt(r.interval)} km`;
+  if (r.state === "never") return r.check ? "unknown · you can check it yourself" : `every ${fmt(r.interval)} km`;
+  if (r.state === "checked_ok") return `you checked it ${r.checked_on} · asks again in ${r.check_days_left} days`;
+  if (r.state === "checked_bad") return `you checked it ${r.checked_on} · get it changed`;
   if (r.state === "overdue") return r.km_left < 0 ? `over by ${fmt(-r.km_left)} km` : "too old (time)";
   if (r.state === "due_now") return "change it now";
   if (r.state === "soon") return r.km_left <= 2000 ? `in ${fmt(r.km_left)} km` : `in ${r.days_left} days`;
@@ -634,7 +661,7 @@ function renderDue() {
   const box = $("due");
   box.replaceChildren();
   $("dueEmpty").hidden = !!state.due;
-  const order = { overdue: 0, due_now: 1, soon: 2, ok: 3, never: 4 };
+  const order = { checked_bad: 0, overdue: 0, due_now: 1, soon: 2, ok: 3, checked_ok: 4, never: 5 };
   [...(state.due || [])].sort((a, b) => order[a.state] - order[b.state]).forEach((r) => {
     const li = el("li");
     li.style.gridTemplateColumns = "auto 1fr";
@@ -642,10 +669,44 @@ function renderDue() {
     name.append(el("summary", "", r.service), el("div", "more", r.why));
     const col = el("div");
     col.append(name, el("div", "when", dueDetail(r)));
+    // v1.1 guided check: only for services with no service on record and a guide in the knowledge file
+    if (r.check && ["never", "checked_ok", "checked_bad"].includes(r.state)) {
+      const btn = el("button", "chip", r.state === "never" ? "CHECK IT ▸" : "CHECK AGAIN ▸");
+      btn.style.marginTop = "6px";
+      const guide = checkGuide(r);
+      guide.hidden = true;
+      btn.onclick = () => { guide.hidden = !guide.hidden; };
+      col.append(btn, guide);
+    }
     li.append(el("span", `tag ${r.state}`, LABELS[r.state]), col);
     box.append(li);
   });
   $("disclaimer").textContent = state.disclaimer || "";
+}
+function checkGuide(r) {
+  const g = el("div", "guide");
+  const steps = el("ol");
+  r.check.how.forEach((s) => steps.append(el("li", "", s)));
+  const looks = el("div", "looks");
+  [["fine", "Fine"], ["old", "Getting old"], ["bad", "Bad"]].forEach(([k, label]) => {
+    const row = el("div");
+    row.append(el("b", "", label + ": "), document.createTextNode(r.check[k]));
+    looks.append(row);
+  });
+  const acts = el("div", "acts");
+  const send = async (result) => {
+    const res = await api("/api/check", { service: r.service, result });
+    if (!res.ok) return toast("checkToast", res.data.error, false);
+    toast("checkToast", `${r.service}: saved as "${result === "fine" ? "looks fine" : "looks bad"}"`);
+    await refresh();
+  };
+  const b = (text, fn, ghost = true) => { const x = el("button", ghost ? "btn ghost" : "btn", text); x.onclick = fn; acts.append(x); };
+  b("IT WAS DONE ▸ LOG IT", () => { resetJobForm(); selected.add(r.service); renderChips(); go("log"); }, false);
+  b("LOOKS FINE", () => send("fine"));
+  b("LOOKS BAD", () => send("bad"));
+  b("I CAN'T CHECK IT", () => toast("checkToast", `No problem. Ask your mechanic to check the ${r.service} at your next visit.`));
+  g.append(steps, looks, el("div", "small", 'Getting old counts as "looks fine", but plan a change soon.'), acts);
+  return g;
 }
 function renderWatch() {
   const box = $("watchList");
@@ -716,20 +777,35 @@ function setTab(diag) {
 $("tabQuick").onclick = () => setTab(false);
 $("tabDiag").onclick = () => setTab(true);
 
-$("ask").onclick = async () => {
-  const q = $("q").value.trim();
-  if (!q) return;
+async function askMechanic(q, adjust) {
   const chat = $("chat");
-  chat.append(el("div", "msg me", q));
+  chat.append(el("div", "msg me", adjust ? (adjust === "simpler" ? "simpler please" : "skip the basics") : q));
   const thinking = el("div", "msg ai", "thinking...");
   chat.append(thinking);
-  $("q").value = ""; $("ask").disabled = true;
+  $("ask").disabled = true;
   try {
-    const r = await api("/api/ask", { question: q });
+    const r = await api("/api/ask", { question: q, adjust });
     thinking.textContent = r.ok ? r.data.answer : r.data.error;
     if (!r.ok) thinking.className = "msg err";
+    else {
+      // v1.1: the owner can correct the level for this answer (the setting itself never changes here)
+      const acts = el("div", "chips");
+      acts.style.marginTop = "6px";
+      [["simpler", "SIMPLER PLEASE"], ["deeper", "SKIP THE BASICS"]].forEach(([key, label]) => {
+        const b = el("button", "chip", label);
+        b.onclick = () => { acts.remove(); askMechanic(q, key); };
+        acts.append(b);
+      });
+      thinking.after(acts);
+    }
   } catch { thinking.textContent = "Couldn't reach the garage server."; thinking.className = "msg err"; }
   $("ask").disabled = false; thinking.scrollIntoView({ block: "nearest" });
+}
+$("ask").onclick = () => {
+  const q = $("q").value.trim();
+  if (!q) return;
+  $("q").value = "";
+  askMechanic(q);
 };
 $("q").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("ask").click(); } });
 

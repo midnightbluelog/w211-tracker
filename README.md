@@ -13,6 +13,8 @@ It's my first real project on the way to working with AI agents. I write the spe
 - **What's due.** Every service is checked by kilometres **and** by time, whichever runs out first. Parts wear from driving, but brake fluid and coolant also age while the car sits parked.
 - **Watch list.** 11 known W211 / OM646 problems (injector seals, timing chain, SBC brakes, EGR...) filtered to your mileage, with the signs to look for and what to check.
 - **Health score.** One number for the whole car. See below.
+- **Ask, don't guess (v1.1).** When the app has no data on something (brake fluid, coolant, glow plugs), it shows a short guide to check it yourself: how to look, what fine / getting old / bad look like. Tap what you saw. A "looks fine" check counts half and expires after 3 months; "looks bad" counts as overdue.
+- **Talks at your level (v1.1).** Tell it how much you know about cars. The AI mechanic adapts, and every answer has "simpler please" / "skip the basics" buttons.
 - **AI mechanic.** Ask a quick question, or run a diagnosis session: describe the problem, answer 4 questions, get a ranked list of likely causes. It runs locally with [Ollama](https://ollama.com), so it's free and nothing leaves your PC.
 - **Works on phone and desktop:** a side menu on desktop, a bottom tab bar on phone.
 
@@ -55,7 +57,7 @@ It opens at `http://127.0.0.1:5211`.
 
 For the AI mechanic, install [Ollama](https://ollama.com) and run `ollama pull llama3.2:3b`. Everything else works without it.
 
-Your car details and service log are saved in `car.json` and `service_log.json` next to the script. They stay on your machine and are not part of this repo.
+Your car details, service log and checks are saved in `car.json`, `service_log.json` and `checks.json` next to the script. They stay on your machine and are not part of this repo.
 
 ## Honest limits
 
@@ -81,6 +83,8 @@ Your car details and service log are saved in `car.json` and `service_log.json` 
 - [x] What's due, by km and by time
 - [x] Watch list and AI mechanic
 - [x] Honest health score and redesign
+- [x] v1.1: guided checks, talks at your level, fixes from my own testing
+- [ ] v1.2: a car journal (photos, before/after, how it drives) that the AI mechanic reads
 - [ ] More W211 engines, then other pre-2010 Mercedes and BMW
 
 ## The story

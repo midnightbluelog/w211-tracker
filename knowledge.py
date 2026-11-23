@@ -31,19 +31,39 @@ def _days_since(iso_date, today):
         return None
 
 
-def due_items(log, current_km, today=None):
+CHECK_TRUST_DAYS = 90   # v1.1 decision 2: a "looks fine" check is trusted for 3 months
+CHECK_CREDIT = 0.5      # v1.1 decision 1: a check counts half, because nothing was serviced
+
+
+def _last_check(checks, service, today):
+    """Most recent check for a service that's still trusted (younger than CHECK_TRUST_DAYS), or None."""
+    fresh = [c for c in (checks or []) if c["service"] == service
+             and (_days_since(c["date"], today) or 0) <= CHECK_TRUST_DAYS]
+    return max(fresh, key=lambda c: c["date"]) if fresh else None
+
+
+def due_items(log, current_km, today=None, checks=None):
     """
     For every interval: whichever comes first, mileage or time.
-    Returns a list of dicts with state overdue / due_now / soon / ok / never.
+    Returns a list of dicts with state overdue / due_now / soon / ok / never,
+    or checked_ok / checked_bad when there's no service on record but the owner checked it (v1.1).
     """
     today = today or date.today()
     rows = []
     for it in load_kb()["intervals"]:
         service = it["service"]
         last = _last_entry(log, service)
-        row = {"service": service, "interval": it["every_km"], "months": it.get("every_months"), "why": it["why"]}
+        row = {"service": service, "interval": it["every_km"], "months": it.get("every_months"),
+               "why": it["why"], "check": it.get("check")}
         if last is None:
-            rows.append({**row, "state": "never"})
+            chk = _last_check(checks, service, today)
+            if chk is None:
+                rows.append({**row, "state": "never"})
+            else:
+                # decision 3: "looks bad" is treated like overdue
+                state = "checked_ok" if chk["result"] == "fine" else "checked_bad"
+                rows.append({**row, "state": state, "checked_on": chk["date"],
+                             "check_days_left": CHECK_TRUST_DAYS - (_days_since(chk["date"], today) or 0)})
             continue
 
         # mileage side (my original spec)
@@ -102,13 +122,26 @@ def health_score(rows):
     if not rows:
         return None
     weights = {it["service"]: it.get("weight", 1) for it in load_kb()["intervals"]}
+
+    def known_weight(r):
+        # a "looks fine" check only counts half: someone looked, but nothing was serviced
+        w = weights.get(r["service"], 1)
+        return w * CHECK_CREDIT if r["state"] == "checked_ok" else w
+
+    def score(r):
+        if r["state"] == "checked_ok":
+            return 1.0
+        if r["state"] == "checked_bad":
+            return 0.0
+        return _item_score(r)
+
     total = sum(weights.get(r["service"], 1) for r in rows)
     known = [r for r in rows if r["state"] != "never"]
-    known_w = sum(weights.get(r["service"], 1) for r in known)
+    known_w = sum(known_weight(r) for r in known)
     info = known_w / total
-    condition = (sum(weights.get(r["service"], 1) * _item_score(r) for r in known) / known_w) if known else 0
+    condition = (sum(known_weight(r) * score(r) for r in known) / known_w) if known else 0
     health = round(100 * condition * info)
-    capped = any(r["service"] in SAFETY_SERVICES and r["state"] == "overdue" for r in known)
+    capped = any(r["service"] in SAFETY_SERVICES and r["state"] in ("overdue", "checked_bad") for r in known)
     if capped:
         health = min(health, SAFETY_CAP)
     return {

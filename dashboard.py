@@ -14,7 +14,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 from knowledge import due_items, health_score, load_kb, watch_list
-from mechanic import ai_status, ask_mechanic, diagnose_finish, diagnose_start
+from mechanic import LEVELS, ai_status, ask_mechanic, diagnose_finish, diagnose_start
 from tracker import load_log, save_log
 from vin import decode_vin
 
@@ -22,6 +22,8 @@ HOST, PORT = "127.0.0.1", 5211
 HERE = Path(__file__).parent
 PAGE = HERE / "dashboard.html"
 CAR_FILE = HERE / "car.json"   # your car profile, kept private like the log
+CHECKS_FILE = HERE / "checks.json"   # v1.1: "I checked it myself" results, private too
+CHECK_RESULTS = {"fine", "bad"}
 
 
 # ---------- car profile ----------
@@ -36,6 +38,20 @@ def load_car():
 def save_car(car):
     with open(CAR_FILE, "w", encoding="utf-8") as f:
         json.dump(car, f, indent=2, ensure_ascii=False)
+
+
+# ---------- owner checks (v1.1) ----------
+
+def load_checks():
+    if not CHECKS_FILE.exists():
+        return []
+    with open(CHECKS_FILE, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def save_checks(checks):
+    with open(CHECKS_FILE, "w", encoding="utf-8") as f:
+        json.dump(checks, f, indent=2, ensure_ascii=False)
 
 
 # ---------- helpers ----------
@@ -87,7 +103,7 @@ class Handler(BaseHTTPRequestHandler):
             if km is None and car:
                 km = car.get("mileage")
             kb = load_kb()
-            due = due_items(log, km) if km is not None else None
+            due = due_items(log, km, checks=load_checks()) if km is not None else None
             self.send_json({
                 "car": car,
                 "services": [it["service"] for it in kb["intervals"]],
@@ -112,7 +128,13 @@ class Handler(BaseHTTPRequestHandler):
             model = str(data.get("model", "")).strip()
             if not model or mileage is None:
                 return self.send_json({"error": "Model and a numeric mileage are required."}, 400)
-            year = to_km(data.get("year", ""))
+            # v1.1 fix: the year field once saved "20040913" (a full date from the carte grise)
+            year_text = str(data.get("year", "")).strip()
+            year = None
+            if year_text:
+                year = int(year_text) if year_text.isdigit() and len(year_text) == 4 else None
+                if year is None or not 1950 <= year <= date.today().year + 1:
+                    return self.send_json({"error": "Year must be 4 digits, like 2004."}, 400)
             car = {
                 "nickname": str(data.get("nickname", "")).strip(),
                 "make": str(data.get("make", "Mercedes-Benz")).strip(),
@@ -122,6 +144,8 @@ class Handler(BaseHTTPRequestHandler):
                 "year": year,
                 "vin": str(data.get("vin", "")).strip().upper(),
                 "mileage": mileage,
+                # v1.1: how much the owner knows about cars (decision 5: "basics" by default)
+                "level": data.get("level") if data.get("level") in LEVELS else "basics",
             }
             save_car(car)
             self.send_json({"car": car})
@@ -144,11 +168,37 @@ class Handler(BaseHTTPRequestHandler):
             when = str(data.get("date") or date.today())
             notes = str(data.get("notes", "")).strip()
             log = load_log()
-            entries = [{"service": s, "km": km, "date": when, "notes": notes} for s in services]
+            # v1.1 fix: warn before logging the same service twice at the same mileage
+            dups = sorted({s for s in services if any(e["service"] == s and e["km"] == km for e in log)})
+            if dups and not data.get("force"):
+                return self.send_json({"duplicate": dups,
+                                       "error": f"Already logged at {km:,} km: {', '.join(dups)}."}, 409)
+            # v1.1: oil changes keep the oil spec (e.g. 5W-40, MB 229.5) at the front of the notes
+            oil_spec = str(data.get("oil_spec", "")).strip()
+
+            def notes_for(s):
+                if s == "oil change" and oil_spec:
+                    return f"{oil_spec} · {notes}" if notes else oil_spec
+                return notes
+            entries = [{"service": s, "km": km, "date": when, "notes": notes_for(s)} for s in services]
             log.extend(entries)
             save_log(log)
             bump_mileage(km)
             self.send_json({"saved": entries})
+
+        elif self.path == "/api/check":
+            # the owner checked a service themselves: "looks fine" or "looks bad"
+            service = str(data.get("service", "")).strip().lower()
+            result = str(data.get("result", "")).strip().lower()
+            known = {it["service"] for it in load_kb()["intervals"] if it.get("check")}
+            if service not in known or result not in CHECK_RESULTS:
+                return self.send_json({"error": "Pick a service that has a check guide, and fine or bad."}, 400)
+            checks = load_checks()
+            entry = {"service": service, "result": result, "date": str(date.today()),
+                     "km": (load_car() or {}).get("mileage")}
+            checks.append(entry)
+            save_checks(checks)
+            self.send_json({"saved": entry})
 
         elif self.path == "/api/edit":
             log = load_log()
@@ -187,8 +237,10 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send_json({"error": "Type a question first."}, 400)
             car = load_car()
             km = to_km(data.get("km", "")) or (car or {}).get("mileage")
+            level = (car or {}).get("level", "basics")
+            adjust = data.get("adjust") if data.get("adjust") in ("simpler", "deeper") else None
             try:
-                answer = ask_mechanic(question, load_log(), km)
+                answer = ask_mechanic(question, load_log(), km, level=level, adjust=adjust)
             except RuntimeError as e:
                 return self.send_json({"error": str(e)}, 503)
             self.send_json({"answer": answer})
@@ -198,7 +250,8 @@ class Handler(BaseHTTPRequestHandler):
             if not symptom:
                 return self.send_json({"error": "Describe the problem first."}, 400)
             try:
-                questions = diagnose_start(symptom, load_log(), (load_car() or {}).get("mileage"))
+                car = load_car() or {}
+                questions = diagnose_start(symptom, load_log(), car.get("mileage"), level=car.get("level", "basics"))
             except RuntimeError as e:
                 return self.send_json({"error": str(e)}, 503)
             self.send_json({"questions": questions})
@@ -209,7 +262,8 @@ class Handler(BaseHTTPRequestHandler):
             if not symptom:
                 return self.send_json({"error": "Describe the problem first."}, 400)
             try:
-                answer = diagnose_finish(symptom, qa, load_log(), (load_car() or {}).get("mileage"))
+                car = load_car() or {}
+                answer = diagnose_finish(symptom, qa, load_log(), car.get("mileage"), level=car.get("level", "basics"))
             except RuntimeError as e:
                 return self.send_json({"error": str(e)}, 503)
             self.send_json({"answer": answer})
@@ -221,10 +275,29 @@ class Handler(BaseHTTPRequestHandler):
         pass  # keep the terminal quiet
 
 
+class GarageServer(ThreadingHTTPServer):
+    # v1.1 fix (ghost servers): on Windows, address reuse let a second copy share the port
+    # while the old one kept answering. Without it, a second copy can't bind.
+    allow_reuse_address = False
+
+
+def already_running():
+    """Is something already answering on our port?"""
+    import socket
+    with socket.socket() as s:
+        s.settimeout(0.5)
+        return s.connect_ex((HOST, PORT)) == 0
+
+
 if __name__ == "__main__":
     url = f"http://{HOST}:{PORT}"
+    if already_running():
+        print(f"Midnight Garage is already running at {url}. Opening that one instead of starting a second copy.")
+        if "--no-browser" not in sys.argv:
+            webbrowser.open(url)
+        sys.exit(0)
     print(f"Midnight Garage running at {url}  (Ctrl+C to stop)")
-    server = ThreadingHTTPServer((HOST, PORT), Handler)
+    server = GarageServer((HOST, PORT), Handler)
     if "--no-browser" not in sys.argv:
         webbrowser.open(url)
     try:

@@ -55,8 +55,8 @@ One place that:
 - **Rule:** design comes LAST, after it works
 
 ### Milestone 5: Ship (1 session)
-- [ ] README, screenshots, make the repo public
-- [ ] Post #2 on the blog: "I built an AI mechanic for my 2004 Mercedes"
+- [x] README, screenshots, make the repo public (2026-11-23)
+- [x] Post #2 on the blog: "I used to keep track of my car in my head" (2026-11-23)
 
 **Estimated total:** about 2 weeks at 1–2 hours a day.
 

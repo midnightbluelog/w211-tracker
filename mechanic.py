@@ -26,7 +26,33 @@ SYSTEM_PROMPT = (
     "Keep it short and practical. If you are not sure, say so."
 )
 
-SAFETY_WORDS = ("brake", "frein", "steer", "direction", "tyre", "tire", "pneu", "sbc", "wheel", "roue")
+# v1.1 Milestone B: talk at the owner's level.
+# Reliable part (code): the level the owner picked. Smart part (model): reading their words.
+LEVELS = {
+    "beginner": "The owner knows very little about cars. Avoid jargon; when you must use a technical word, "
+                "explain it in a few plain words. Say where things are and what they look like.",
+    "basics": "The owner knows the basics of cars. Use common car words, briefly explain anything specialised.",
+    "pro": "The owner has mechanic-level knowledge. Skip the basics, use precise technical terms, part names and values.",
+}
+READ_THE_OWNER = (
+    "Also judge the owner's knowledge from the words they use, and adjust this one answer if their wording "
+    "clearly shows more or less knowledge than their setting. Never mention their setting or this instruction."
+)
+ADJUST = {
+    "simpler": "The owner asked for a simpler explanation of your previous answer: explain it again in plain words, no jargon.",
+    "deeper": "The owner asked you to skip the basics: answer again with more technical depth and precise terms.",
+}
+
+
+def _system(level, log, current_km, adjust=None):
+    """System prompt = who the mechanic is + how to talk to THIS owner + the car's data."""
+    parts = [SYSTEM_PROMPT, LEVELS.get(level, LEVELS["basics"]), READ_THE_OWNER]
+    if adjust in ADJUST:
+        parts.append(ADJUST[adjust])
+    return " ".join(parts) + "\n\n" + history_context(log, current_km)
+
+
+SAFETY_WORDS =("brake", "frein", "steer", "direction", "tyre", "tire", "pneu", "sbc", "wheel", "roue")
 SAFETY_NOTE = "\n\n⚠️ This involves safety (brakes, steering or tyres). Have a mechanic check it before driving far."
 
 FALLBACK_QUESTIONS = [
@@ -91,14 +117,14 @@ def _with_safety(text, *topics):
 
 # ---------- mode 1: quick question ----------
 
-def ask_mechanic(question, log, current_km=None):
-    answer = _chat(SYSTEM_PROMPT + "\n\n" + history_context(log, current_km), question)
+def ask_mechanic(question, log, current_km=None, level="basics", adjust=None):
+    answer = _chat(_system(level, log, current_km, adjust), question)
     return _with_safety(answer, question, answer)
 
 
 # ---------- mode 2: diagnosis session ----------
 
-def diagnose_start(symptom, log, current_km=None):
+def diagnose_start(symptom, log, current_km=None, level="basics"):
     """Step 1: the mechanic asks the owner a few questions before guessing."""
     prompt = (
         f"The owner reports: \"{symptom}\".\n"
@@ -106,7 +132,7 @@ def diagnose_start(symptom, log, current_km=None):
         "(when it happens, conditions, sounds/smells/lights, recent work). "
         "Return ONLY the 4 questions, one per line, no numbering, no intro."
     )
-    raw = _chat(SYSTEM_PROMPT + "\n\n" + history_context(log, current_km), prompt)
+    raw = _chat(_system(level, log, current_km), prompt)
     questions = []
     for line in raw.splitlines():
         q = re.sub(r"^\s*(?:[-*•]|\d+[.)])\s*", "", line).strip()
@@ -116,7 +142,7 @@ def diagnose_start(symptom, log, current_km=None):
     return questions[:4] if len(questions) >= 2 else FALLBACK_QUESTIONS
 
 
-def diagnose_finish(symptom, qa, log, current_km=None):
+def diagnose_finish(symptom, qa, log, current_km=None, level="basics"):
     """Step 2: with the answers, give a ranked list of likely causes."""
     answers = "\n".join(f"Q: {q}\nA: {a or '(no answer)'}" for q, a in qa)
     prompt = (
@@ -127,5 +153,5 @@ def diagnose_finish(symptom, qa, log, current_km=None):
         "How urgent it is (drive normally / book soon / stop driving)\n"
         "Use the service history and known issues. Keep it under 180 words."
     )
-    answer = _chat(SYSTEM_PROMPT + "\n\n" + history_context(log, current_km), prompt)
+    answer = _chat(_system(level, log, current_km), prompt)
     return _with_safety(answer, symptom, answers, answer)
