@@ -12,6 +12,7 @@ import json
 import re
 import urllib.error
 import urllib.request
+from pathlib import Path
 
 from journal import journal_context, load_journal
 from knowledge import due_items, kb_context
@@ -65,6 +66,12 @@ FALLBACK_QUESTIONS = [
 ]
 
 
+def _load_checks():
+    """The owner's own checks (v1.1), saved by the app next to this file."""
+    p = Path(__file__).parent / "checks.json"
+    return json.loads(p.read_text(encoding="utf-8")) if p.exists() else []
+
+
 def history_context(log, current_km=None):
     """Turn the service log into plain text the model can read. The code does the math."""
     lines = ["SERVICE HISTORY (newest first):"]
@@ -78,9 +85,14 @@ def history_context(log, current_km=None):
     if current_km is not None:
         lines.append(f"\nCURRENT MILEAGE: {current_km:,} km")
         lines.append("MAINTENANCE STATUS (already calculated):")
-        for r in due_items(log, current_km):
+        for r in due_items(log, current_km, checks=_load_checks()):
             if r["state"] == "never":
                 lines.append(f"- {r['service']}: never logged")
+            elif r["state"] in ("checked_ok", "checked_bad"):
+                # v1.1: the owner checked it themselves; no service on record
+                look = "looked fine" if r["state"] == "checked_ok" else "looked BAD"
+                lines.append(f"- {r['service']}: no service on record, but the owner checked it on "
+                             f"{r['checked_on']} and it {look}")
             else:
                 lines.append(f"- {r['service']}: {r['state'].replace('_', ' ').upper()} "
                              f"(last at {r['last_km']:,} km, recommended every {r['interval']:,} km)")
